@@ -39,7 +39,25 @@ fn can_parse_a_deposit_command() {
         Ok(tx) => {
             let kind = tx.kind;
             assert_eq!(kind, TransactionType::Deposit);
+            assert_eq!(tx.client_id, 1u16);
+            assert_eq!(tx.id, 1u32);
             assert_eq!(tx.amount, 1.0f32);
+        }
+    }
+}
+
+#[test]
+fn can_parse_a_withdrawal_command() {
+    let record = StringRecord::from(vec!["withdrawal","    2","5      ", " 3.0 "]);
+    let tx = Transaction::from_record(record);
+    match tx {
+        Err(_err) => assert!(false),
+        Ok(tx) => {
+            let kind = tx.kind;
+            assert_eq!(kind, TransactionType::Withdrawal);
+            assert_eq!(tx.client_id, 2u16);
+            assert_eq!(tx.id, 5u32);
+            assert_eq!(tx.amount, 3.0f32);
         }
     }
 }
