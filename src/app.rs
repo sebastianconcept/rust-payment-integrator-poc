@@ -1,14 +1,23 @@
+use std::{sync::RwLock, collections::HashMap};
+
 use csv::StringRecord;
 
-use crate::models::{transaction::{Transaction, TransactionType}, *, commands::deposit::Deposit};
+use crate::models::{transaction::{Transaction, TransactionType}, *, commands::{deposit::Deposit, dispute::Dispute}};
+
+pub type Disputes = RwLock<HashMap<u16,Dispute>>;
 
 pub struct App {
+    // accounts: RwLock<HashMap<u16,Account>>
+    disputes: Disputes,
     rules: Vec<String>,
 }
 
 impl App {
     pub fn new() -> Self {
-        Self { rules: Vec::new() }
+        Self { 
+            rules: Vec::new(),
+            disputes: Default::default(),
+         }
     }
 
     pub fn process(&self, transaction: StringRecord) {

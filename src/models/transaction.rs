@@ -1,13 +1,12 @@
 use csv::StringRecord;
 use serde::Deserialize;
 
-
 type Result<T> = std::result::Result<T, InvalidTransactionType>;
 #[derive(Debug, Clone)]
 pub struct InvalidTransactionType;
 
 // type, client, tx, amount
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Transaction {
     pub kind: TransactionType,
     pub client_id: u16,
@@ -15,7 +14,7 @@ pub struct Transaction {
     pub amount: f32,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub enum TransactionType {
     Deposit,
     Withdrawal,
@@ -36,7 +35,7 @@ impl Transaction {
                     "dispute" => kind = TransactionType::Dispute,
                     "resolve" => kind = TransactionType::Resolve,
                     "chargeback" => kind = TransactionType::Chargeback,
-                    _ => return Err(InvalidTransactionType)
+                    _ => return Err(InvalidTransactionType),
                 };
                 Ok(Self {
                     kind: kind,

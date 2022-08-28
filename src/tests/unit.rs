@@ -1,4 +1,6 @@
-use crate::{app::App, cli::get_command, csv::get_transactions_iter};
+use csv::StringRecord;
+
+use crate::{app::App, cli::get_command, csv::get_transactions_iter, models::transaction::{Transaction, TransactionType}};
 
 #[test]
 fn can_parse_input_filename_from_command_line() {
@@ -30,6 +32,14 @@ fn can_read_a_record_streamed_from_a_csv_input_file() {
 
 #[test]
 fn can_parse_a_deposit_command() {
-    let app = App::new();
-    assert!(false);
+    let record = StringRecord::from(vec!["deposit","    1","      1", " 1.0 "]);
+    let tx = Transaction::from_record(record);
+    match tx {
+        Err(_err) => assert!(false),
+        Ok(tx) => {
+            let kind = tx.kind;
+            assert_eq!(kind, TransactionType::Deposit);
+            assert_eq!(tx.amount, 1.0f32);
+        }
+    }
 }
