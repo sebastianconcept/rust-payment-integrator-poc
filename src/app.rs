@@ -1,10 +1,11 @@
+use crate::models::*;
 
 pub struct App {
-  rules: Vec<String>
+    rules: Vec<String>,
 }
 
 impl App {
-  pub fn new() -> Self {
-    Self { rules: Vec::new() }
-  }
+    pub fn new() -> Self {
+        Self { rules: Vec::new() }
+    }
 }

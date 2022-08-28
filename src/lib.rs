@@ -1,5 +1,6 @@
-pub mod models;
 pub mod app;
+pub mod cli;
+pub mod models;
 
 #[cfg(test)]
-pub mod tests;
+mod tests;
