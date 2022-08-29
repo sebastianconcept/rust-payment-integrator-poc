@@ -4,8 +4,15 @@ use crate::{
     app::App,
     cli::get_command,
     csv::get_transactions_iter,
-    models::transaction::{Transaction, TransactionType},
+    models::{transaction::{Transaction, TransactionType}, transactions::{transactions_size, TRANSACTIONS}},
 };
+
+fn transactions_reset() {
+    TRANSACTIONS
+    .write()
+    .expect("Cannot write transactions")
+    .reset();
+}
 
 #[test]
 fn can_parse_input_filename_from_command_line() {
@@ -69,6 +76,7 @@ fn can_parse_a_withdrawal_command() {
 
 #[test]
 fn deposit_can_increase_account_balance() {
+    transactions_reset();
     let mut app = App::new();
     let record = StringRecord::from(vec!["deposit", "    2", "5      ", " 3.0 "]);
     let tx = Transaction::from_record(record);
@@ -93,6 +101,7 @@ fn deposit_can_increase_account_balance() {
 
 #[test]
 fn withdrawal_can_decrease_account_balance() {
+    transactions_reset();
     let mut app = App::new();
     let record = StringRecord::from(vec!["deposit", "    2", "5      ", " 3.0 "]);
     let tx = Transaction::from_record(record);
@@ -109,11 +118,14 @@ fn withdrawal_can_decrease_account_balance() {
     let client_id = tx2.as_ref().unwrap().client_id;
     app.process(tx2.unwrap());
     let after2 = app.get_available_balance(client_id);
-    assert_eq!(after2, 3.0 - 1.3f32)
+    assert_eq!(after2, 3.0 - 1.3f32);
+    let size = transactions_size();
+    assert_eq!(size, 2)
 }
 
 #[test]
 fn dispute_increase_disputed_balance_and_maintain_total() {
+    transactions_reset();
     let mut app = App::new();
     let tx1 = Transaction::from_record(StringRecord::from(vec!["deposit", "2", "4", "2.0 "]));
     let client_id = tx1.as_ref().unwrap().client_id;
