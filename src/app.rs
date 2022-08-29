@@ -1,6 +1,4 @@
-use std::{
-    collections::HashMap,
-};
+use std::collections::HashMap;
 
 use csv::StringRecord;
 
@@ -94,7 +92,8 @@ impl App {
     }
 
     fn process_resolve(&mut self, transaction: &Transaction) {
-        println!("Processing RESOLVE {:?}", transaction)
+        let account = self.get_account(transaction.client_id);
+        account.process_resolve(transaction).unwrap();
     }
 
     fn process_chargeback(&mut self, transaction: &Transaction) {

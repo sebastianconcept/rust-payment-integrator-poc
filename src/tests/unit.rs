@@ -4,14 +4,17 @@ use crate::{
     app::App,
     cli::get_command,
     csv::get_transactions_iter,
-    models::{transaction::{Transaction, TransactionType}, transactions::{transactions_size, TRANSACTIONS}},
+    models::{
+        transaction::{Transaction, TransactionType},
+        transactions::{transactions_size, TRANSACTIONS},
+    },
 };
 
 fn transactions_reset() {
     TRANSACTIONS
-    .write()
-    .expect("Cannot write transactions")
-    .reset();
+        .write()
+        .expect("Cannot write transactions")
+        .reset();
 }
 
 #[test]
@@ -53,7 +56,7 @@ fn can_parse_a_deposit_command() {
             assert_eq!(kind, TransactionType::Deposit);
             assert_eq!(tx.client_id, 1u16);
             assert_eq!(tx.id, 1u32);
-            assert_eq!(tx.amount, 1.0f32);
+            assert_eq!(tx.amount.unwrap(), 1.0f32);
         }
     }
 }
@@ -69,7 +72,7 @@ fn can_parse_a_withdrawal_command() {
             assert_eq!(kind, TransactionType::Withdrawal);
             assert_eq!(tx.client_id, 2u16);
             assert_eq!(tx.id, 5u32);
-            assert_eq!(tx.amount, 3.0f32);
+            assert_eq!(tx.amount.unwrap(), 3.0f32);
         }
     }
 }
@@ -138,4 +141,29 @@ fn dispute_increase_disputed_balance_and_maintain_total() {
     let total = account.total_balance();
     let available = account.available_balance();
     assert_eq!(available, total - 0.5f32)
+}
+
+#[test]
+fn resolve_decrease_held_balances_increase_available_and_maintain_total() {
+    transactions_reset();
+    let mut app = App::new();
+    let tx1 = Transaction::from_record(StringRecord::from(vec!["deposit", "2", "4", "2.0 "]));
+    let client_id = tx1.as_ref().unwrap().client_id;
+    app.process(tx1.unwrap());
+    let tx2 = Transaction::from_record(StringRecord::from(vec!["deposit", "2", "5", "1.5"]));
+    app.process(tx2.unwrap());
+    let tx3 = Transaction::from_record(StringRecord::from(vec!["dispute", "2", "6", "0.5 "]));
+    app.process(tx3.unwrap());
+    let held_before = app.get_account(client_id).held_balance().clone();
+    let total_before = app.get_account(client_id).total_balance().clone();
+    assert_ne!(held_before, 0f32);
+    assert_eq!(held_before, 0.5f32);
+    assert_eq!(total_before, 3.5f32);
+    let tx4 = Transaction::from_record(StringRecord::from(vec!["resolve", "2", "6", ""]));
+    app.process(tx4.unwrap());
+    let held_after = app.get_account(client_id).held_balance().clone();
+    let total_after = app.get_account(client_id).total_balance().clone();
+    assert_ne!(held_after, 0.5f32);
+    assert_eq!(held_after, 0f32);
+    assert_eq!(total_after, 3.5f32);
 }
