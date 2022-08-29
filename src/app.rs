@@ -1,27 +1,28 @@
-use std::{collections::HashMap, sync::RwLock};
+use std::{collections::HashMap};
 
 use csv::StringRecord;
 
 use crate::models::{
-    commands::dispute::Dispute,
-    transaction::{Transaction, TransactionType, ClientID, Amount}, account::Account
+    account::{Account, Disputes},
+    transaction::{Amount, ClientID, Transaction, TransactionType},
 };
 
-pub type Disputes = RwLock<HashMap<u16, Dispute>>;
-
 pub struct App {
-    accounts: RwLock<HashMap<ClientID,Account>>,
-    disputes: Disputes,
-    rules: Vec<String>,
+    accounts: HashMap<ClientID, Account>,
 }
 
 impl App {
     pub fn new() -> Self {
         Self {
-            rules: Vec::new(),
-            disputes: Default::default(),
             accounts: Default::default(),
         }
+    }
+
+    // Returns an ensured Account for the given ID.
+    pub fn get_account(&mut self, client_id: ClientID) -> &mut Account {
+        self.accounts
+            .entry(client_id)
+            .or_insert_with(|| Account::new(client_id))
     }
 
     pub fn process(&self, transaction: Transaction) {
@@ -71,7 +72,8 @@ impl App {
         println!("Processing CHARGEBACK {:?}", transaction)
     }
 
-    pub fn get_available_balance(&self, client_id: ClientID) -> Amount {
-        0f32
+    pub fn get_available_balance(&mut self, client_id: ClientID) -> Amount {
+        let account = self.get_account(client_id);
+        account.available_balance()
     }
 }
