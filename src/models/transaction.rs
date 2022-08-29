@@ -5,13 +5,17 @@ type Result<T> = std::result::Result<T, InvalidTransactionType>;
 #[derive(Debug, Clone)]
 pub struct InvalidTransactionType;
 
+pub type ClientID = u16;
+pub type TransactionID = u32;
+pub type TransactionAmount = f32;
+
 // type, client, tx, amount
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct Transaction {
     pub kind: TransactionType,
-    pub client_id: u16,
-    pub id: u32,
-    pub amount: f32,
+    pub client_id: ClientID,
+    pub id: TransactionID,
+    pub amount: TransactionAmount,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -39,9 +43,9 @@ impl Transaction {
                 };
                 Ok(Self {
                     kind: kind,
-                    client_id: record.get(1).unwrap().trim().parse::<u16>().unwrap(),
-                    id: record.get(2).unwrap().trim().parse::<u32>().unwrap(),
-                    amount: record.get(3).unwrap().trim().parse::<f32>().unwrap(),
+                    client_id: record.get(1).unwrap().trim().parse::<ClientID>().unwrap(),
+                    id: record.get(2).unwrap().trim().parse::<TransactionID>().unwrap(),
+                    amount: record.get(3).unwrap().trim().parse::<TransactionAmount>().unwrap(),
                 })
             }
         }

@@ -61,3 +61,22 @@ fn can_parse_a_withdrawal_command() {
         }
     }
 }
+
+#[test]
+fn deposit_can_increase_account_balance() {
+    let app= App::new();
+    let record = StringRecord::from(vec!["deposit","    2","5      ", " 3.0 "]);
+    let tx = Transaction::from_record(record);
+    match tx {
+        Err(_err) => assert!(false),
+        Ok(tx) => {
+            let tid= tx.client_id.clone();
+            let before = app.get_available_balance(tid);
+            assert_eq!(before, 0f32);
+            app.process(tx);
+            let after = app.get_available_balance(tid);
+            assert_ne!(before, after);
+            assert_eq!(after, 3.0f32);
+        }
+    }
+}
