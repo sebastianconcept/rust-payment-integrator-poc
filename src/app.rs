@@ -1,18 +1,16 @@
 use std::{collections::HashMap, sync::RwLock};
 
 use csv::StringRecord;
-use serde::de::IntoDeserializer;
 
 use crate::models::{
     commands::dispute::Dispute,
-    transaction::{Transaction, TransactionType, ClientID, TransactionAmount},
-    *,
+    transaction::{Transaction, TransactionType, ClientID, Amount}, account::Account
 };
 
 pub type Disputes = RwLock<HashMap<u16, Dispute>>;
 
 pub struct App {
-    // accounts: RwLock<HashMap<u16,Account>>
+    accounts: RwLock<HashMap<ClientID,Account>>,
     disputes: Disputes,
     rules: Vec<String>,
 }
@@ -22,6 +20,7 @@ impl App {
         Self {
             rules: Vec::new(),
             disputes: Default::default(),
+            accounts: Default::default(),
         }
     }
 
@@ -72,7 +71,7 @@ impl App {
         println!("Processing CHARGEBACK {:?}", transaction)
     }
 
-    pub fn get_available_balance(&self, client_id: ClientID) -> TransactionAmount {
+    pub fn get_available_balance(&self, client_id: ClientID) -> Amount {
         0f32
     }
 }
