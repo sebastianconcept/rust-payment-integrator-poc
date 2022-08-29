@@ -1,4 +1,6 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, cell::RefMut};
+
+use crate::models::transactions::transactions_set;
 
 use super::transaction::{Amount, ClientID, Transaction};
 
@@ -28,21 +30,36 @@ impl Account {
     }
 
     // A deposit is a credit to the client's asset account, meaning it should increase the available and total funds of the client account.
-    pub fn process_deposit(&mut self, transaction: Transaction) -> Result<Transaction> {
+    pub fn process_deposit(&mut self, transaction: &Transaction) -> Result<Transaction> {
       println!("Processing DEPOSIT {:?}", transaction);
       self.available += transaction.amount;
-      Ok(transaction)
+      Ok(transaction.clone())
     }
 
-    pub fn process_withdrawal(&mut self, transaction: Transaction) -> Result<Transaction> {
+    // A withdraw is a debit to the client's asset account, meaning it should decrease the available and total funds of the client account.
+    pub fn process_withdrawal(&mut self, transaction: &Transaction) -> Result<Transaction> {
       println!("Processing WITHDRAWAL {:?}", transaction);
       if self.available > transaction.amount {
         self.available -= transaction.amount;
-        Ok(transaction)
+        Ok(transaction.clone())
       } else {
         Err(RejectedTransaction)
       }
-      
+    }
+
+    // A dispute represents a client's claim that a transaction was erroneous and should be reversed. 
+    // The transaction shouldn't be reversed yet but the associated funds should be held. 
+    // This means that the clients available funds should decrease by the amount disputed, 
+    // their held funds should increase by the amount disputed, 
+    // while their total funds should remain the same.
+    pub fn process_dispute(&mut self, transaction: &Transaction) -> Result<Transaction> {
+      println!("Processing DISPUTE {:?}", transaction);
+      if self.available > transaction.amount {
+        self.available -= transaction.amount;
+        Ok(transaction.clone())
+      } else {
+        Err(RejectedTransaction)
+      }
     }
 
     pub fn available_balance(&self) -> Amount {
@@ -53,3 +70,4 @@ impl Account {
         self.available + self.held
     }
 }
+// 

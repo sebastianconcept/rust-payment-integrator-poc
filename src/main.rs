@@ -1,4 +1,10 @@
-use integrator::{app::App, cli::get_input_filename, csv::get_transactions_iter};
+#[macro_use]
+extern crate lazy_static;
+extern crate mut_static;
+
+use integrator::{
+    app::App, cli::get_input_filename, csv::get_transactions_iter,
+};
 
 fn main() {
     let mut app = App::new();
