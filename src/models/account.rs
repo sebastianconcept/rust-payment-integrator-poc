@@ -6,7 +6,7 @@ type Result<T> = std::result::Result<T, RejectedTransaction>;
 pub type Disputes = HashMap<ClientID, Transaction>;
 
 #[derive(Debug, Clone)]
-pub struct RejectedTransaction {}
+pub struct RejectedTransaction;
 
 pub struct Account {
     client_id: ClientID,
@@ -29,8 +29,20 @@ impl Account {
 
     // A deposit is a credit to the client's asset account, meaning it should increase the available and total funds of the client account.
     pub fn process_deposit(&mut self, transaction: Transaction) -> Result<Transaction> {
+      println!("Processing DEPOSIT {:?}", transaction);
       self.available += transaction.amount;
       Ok(transaction)
+    }
+
+    pub fn process_withdrawal(&mut self, transaction: Transaction) -> Result<Transaction> {
+      println!("Processing WITHDRAWAL {:?}", transaction);
+      if self.available > transaction.amount {
+        self.available -= transaction.amount;
+        Ok(transaction)
+      } else {
+        Err(RejectedTransaction)
+      }
+      
     }
 
     pub fn available_balance(&self) -> Amount {

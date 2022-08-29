@@ -92,6 +92,27 @@ fn deposit_can_increase_account_balance() {
 }
 
 #[test]
+fn withdrawal_can_decrease_account_balance() {
+    let mut app = App::new();
+    let record = StringRecord::from(vec!["deposit", "    2", "5      ", " 3.0 "]);
+    let tx = Transaction::from_record(record);
+    match tx {
+        Err(_err) => assert!(false),
+        Ok(tx) => {
+            let client_id = tx.client_id.clone();
+            app.process(tx);
+            let after = app.get_available_balance(client_id);
+            assert_eq!(after, 3.0f32);
+        }
+    }
+    let tx2 = Transaction::from_record(StringRecord::from(vec!["withdrawal", "2", "15", "1.3"]));
+    let client_id = tx2.as_ref().unwrap().client_id;
+    app.process(tx2.unwrap());
+    let after2 = app.get_available_balance(client_id);
+    assert_eq!(after2, 3.0 - 1.3f32)
+}
+
+#[test]
 fn dispute_increase_disputed_balance_and_maintain_total() {
     let mut app = App::new();
     let tx1 = Transaction::from_record(StringRecord::from(vec!["deposit", "2", "4", "2.0 "]));

@@ -53,13 +53,13 @@ impl App {
     }
 
     fn process_deposit(&mut self, transaction: Transaction) {
-        println!("Processing DEPOSIT {:?}", transaction);
         let account = self.get_account(transaction.client_id);
-        account.process_deposit(transaction);
+        account.process_deposit(transaction).unwrap();
     }
 
     fn process_withdrawal(&mut self, transaction: Transaction) {
-        println!("Processing WITHDRAWAL {:?}", transaction)
+        let account = self.get_account(transaction.client_id);
+        account.process_withdrawal(transaction).unwrap();
     }
 
     fn process_dispute(&mut self, transaction: Transaction) {
