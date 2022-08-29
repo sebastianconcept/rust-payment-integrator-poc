@@ -25,7 +25,7 @@ impl App {
             .or_insert_with(|| Account::new(client_id))
     }
 
-    pub fn process(&self, transaction: Transaction) {
+    pub fn process(&mut self, transaction: Transaction) {
         match transaction.kind {
             TransactionType::Deposit => self.process_deposit(transaction),
             TransactionType::Withdrawal => self.process_withdrawal(transaction),
@@ -35,7 +35,7 @@ impl App {
         };
     }
 
-    pub fn process_record(&self, record: StringRecord) {
+    pub fn process_record(&mut self, record: StringRecord) {
         let transaction = Transaction::from_record(record);
         match transaction {
             Err(err) => {
@@ -52,23 +52,25 @@ impl App {
         }
     }
 
-    fn process_deposit(&self, transaction: Transaction) {
-        println!("Processing DEPOSIT {:?}", transaction)
+    fn process_deposit(&mut self, transaction: Transaction) {
+        println!("Processing DEPOSIT {:?}", transaction);
+        let account = self.get_account(transaction.client_id);
+        account.process_deposit(transaction);
     }
 
-    fn process_withdrawal(&self, transaction: Transaction) {
+    fn process_withdrawal(&mut self, transaction: Transaction) {
         println!("Processing WITHDRAWAL {:?}", transaction)
     }
 
-    fn process_dispute(&self, transaction: Transaction) {
+    fn process_dispute(&mut self, transaction: Transaction) {
         println!("Processing DISPUTE {:?}", transaction)
     }
 
-    fn process_resolve(&self, transaction: Transaction) {
+    fn process_resolve(&mut self, transaction: Transaction) {
         println!("Processing RESOLVE {:?}", transaction)
     }
 
-    fn process_chargeback(&self, transaction: Transaction) {
+    fn process_chargeback(&mut self, transaction: Transaction) {
         println!("Processing CHARGEBACK {:?}", transaction)
     }
 

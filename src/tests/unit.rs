@@ -2,7 +2,7 @@ use csv::StringRecord;
 
 use crate::{
     app::App,
-    cli::{self, get_command},
+    cli::get_command,
     csv::get_transactions_iter,
     models::transaction::{Transaction, TransactionType},
 };
@@ -75,15 +75,20 @@ fn deposit_can_increase_account_balance() {
     match tx {
         Err(_err) => assert!(false),
         Ok(tx) => {
-            let tid = tx.client_id.clone();
-            let before = app.get_available_balance(tid);
+            let client_id = tx.client_id.clone();
+            let before = app.get_available_balance(client_id);
             assert_eq!(before, 0f32);
             app.process(tx);
-            let after = app.get_available_balance(tid);
+            let after = app.get_available_balance(client_id);
             assert_ne!(before, after);
             assert_eq!(after, 3.0f32);
         }
     }
+    let tx2 = Transaction::from_record(StringRecord::from(vec!["deposit", "2", "15", "1.5"]));
+    let client_id = tx2.as_ref().unwrap().client_id;
+    app.process(tx2.unwrap());
+    let after2 = app.get_available_balance(client_id);
+    assert_eq!(after2, 4.5f32)
 }
 
 #[test]
