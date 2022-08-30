@@ -1,6 +1,6 @@
+use crate::models::account::{RejectedTransaction, Result};
 use csv::StringRecord;
 
-type Result<T> = std::result::Result<T, InvalidTransactionType>;
 #[derive(Debug, Clone)]
 pub struct InvalidTransactionType;
 
@@ -29,14 +29,14 @@ pub enum TransactionType {
 impl Transaction {
     pub fn from_record(record: StringRecord) -> Result<Self> {
         match record.get(0) {
-            None => Err(InvalidTransactionType),
+            None => Err(RejectedTransaction::InvalidType),
             Some(value) => match value {
                 "deposit" => Self::new_deposit(record),
                 "withdrawal" => Self::new_withdrawal(record),
                 "dispute" => Self::new_dispute(record),
                 "resolve" => Self::new_resolve(record),
                 "chargeback" => Self::new_chargeback(record),
-                _ => return Err(InvalidTransactionType),
+                _ => return Err(RejectedTransaction::InvalidInput),
             },
         }
     }
@@ -62,11 +62,11 @@ impl Transaction {
     pub fn new_deposit(record: StringRecord) -> Result<Self> {
         let amount;
         match record.get(3) {
-            None => return Err(InvalidTransactionType),
+            None => return Err(RejectedTransaction::InvalidInput),
             Some(value) => {
                 let a = value.trim().parse::<Amount>();
                 match a {
-                    Err(err) => return Err(InvalidTransactionType),
+                    Err(err) => return Err(RejectedTransaction::InvalidInput),
                     Ok(value) => amount = Some(value),
                 }
             }
@@ -77,11 +77,11 @@ impl Transaction {
     pub fn new_withdrawal(record: StringRecord) -> Result<Self> {
         let amount;
         match record.get(3) {
-            None => return Err(InvalidTransactionType),
+            None => return Err(RejectedTransaction::InvalidInput),
             Some(value) => {
                 let a = value.trim().parse::<Amount>();
                 match a {
-                    Err(err) => return Err(InvalidTransactionType),
+                    Err(err) => return Err(RejectedTransaction::InvalidInput),
                     Ok(value) => amount = Some(value),
                 }
             }

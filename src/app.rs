@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use csv::StringRecord;
 
 use crate::models::{
-    account::Account,
+    account::{Account, Result, RejectedTransaction},
     transaction::{Amount, ClientID, Transaction, TransactionType},
     transactions::{transactions_set, TRANSACTIONS},
 };
@@ -26,7 +26,7 @@ impl App {
             .or_insert_with(|| Account::new(client_id))
     }
 
-    pub fn process(&mut self, transaction: Transaction) {
+    pub fn process(&mut self, transaction: Transaction) -> Result<Transaction> {
         let tid = transaction.id.clone();
         transactions_set(transaction);
         let transactions = TRANSACTIONS
@@ -34,70 +34,49 @@ impl App {
             .expect("Could not get read access to the transactions store");
         let tx = transactions.get(tid);
         match tx {
-            None => println!("Ignoring invalid transaction id {}", tid),
-            Some(txn) => {
-                match txn.kind {
-                    TransactionType::Deposit => self.process_deposit(txn),
-                    TransactionType::Withdrawal => self.process_withdrawal(txn),
-                    TransactionType::Dispute => self.process_dispute(txn),
-                    TransactionType::Resolve => self.process_resolve(txn),
-                    TransactionType::Chargeback => self.process_chargeback(txn),
-                };
-            }
+            None => Err(RejectedTransaction::IDNotFound),
+            Some(txn) => match txn.kind {
+                TransactionType::Deposit => self.process_deposit(txn),
+                TransactionType::Withdrawal => self.process_withdrawal(txn),
+                TransactionType::Dispute => self.process_dispute(txn),
+                TransactionType::Resolve => self.process_resolve(txn),
+                TransactionType::Chargeback => self.process_chargeback(txn),
+            },
         }
     }
 
-    pub fn process_record(&mut self, record: StringRecord) {
+    pub fn process_record(&mut self, record: StringRecord) -> Result<Transaction> {
         let transaction = Transaction::from_record(record);
         match transaction {
-            Err(err) => {
-                // Ignoring unexpected invalid transaction input
-                println!("Ignoring invalid transaction record (unknown transaction type)")
-            }
-            Ok(tx) => {
-                let tid = tx.id.clone();
-                transactions_set(tx);
-                let transactions = TRANSACTIONS
-                    .read()
-                    .expect("Could not get read access to the transactions store");
-                let tx = transactions.get(tid);
-                match tx {
-                    None => println!("Ignoring invalid transaction id {}", tid),
-                    Some(txn) => match txn.kind {
-                        TransactionType::Deposit => self.process_deposit(txn),
-                        TransactionType::Withdrawal => self.process_withdrawal(txn),
-                        TransactionType::Dispute => self.process_dispute(txn),
-                        TransactionType::Resolve => self.process_resolve(txn),
-                        TransactionType::Chargeback => self.process_chargeback(txn),
-                    },
-                }
-            }
+            Err(err) => Err(err),
+            Ok(tx) => self.process(tx),
         }
     }
 
-    fn process_deposit(&mut self, transaction: &Transaction) {
+    fn process_deposit(&mut self, transaction: &Transaction) -> Result<Transaction> {
         let client_id = transaction.client_id;
         let account = self.get_account(client_id);
-        account.process_deposit(transaction).unwrap();
+        account.process_deposit(transaction)
     }
 
-    fn process_withdrawal(&mut self, transaction: &Transaction) {
+    fn process_withdrawal(&mut self, transaction: &Transaction) -> Result<Transaction> {
         let account = self.get_account(transaction.client_id);
-        account.process_withdrawal(transaction).unwrap();
+        account.process_withdrawal(transaction)
     }
 
-    fn process_dispute(&mut self, transaction: &Transaction) {
+    fn process_dispute(&mut self, transaction: &Transaction) -> Result<Transaction> {
         let account = self.get_account(transaction.client_id);
-        account.process_dispute(transaction).unwrap();
+        account.process_dispute(transaction)
     }
 
-    fn process_resolve(&mut self, transaction: &Transaction) {
+    fn process_resolve(&mut self, transaction: &Transaction) -> Result<Transaction> {
         let account = self.get_account(transaction.client_id);
-        account.process_resolve(transaction).unwrap();
+        account.process_resolve(transaction)
     }
 
-    fn process_chargeback(&mut self, transaction: &Transaction) {
-        println!("Processing CHARGEBACK {:?}", transaction)
+    fn process_chargeback(&mut self, transaction: &Transaction) -> Result<Transaction> {
+        let account = self.get_account(transaction.client_id);
+        account.process_chargeback(transaction)
     }
 
     pub fn get_available_balance(&mut self, client_id: ClientID) -> Amount {

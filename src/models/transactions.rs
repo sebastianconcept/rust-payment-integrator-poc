@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::transaction::{self, Transaction, TransactionID};
+use super::transaction::{Transaction, TransactionID};
 
 use lazy_static::lazy_static;
 use mut_static::MutStatic;

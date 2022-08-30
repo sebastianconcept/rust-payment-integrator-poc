@@ -1,14 +1,20 @@
-use std::{cell::RefMut, collections::HashMap};
+use std::collections::HashMap;
 
-use crate::models::transactions::{transactions_set, TRANSACTIONS};
+use crate::models::transactions::TRANSACTIONS;
 
 use super::transaction::{Amount, ClientID, Transaction};
 
-type Result<T> = std::result::Result<T, RejectedTransaction>;
+pub type Result<T> = std::result::Result<T, RejectedTransaction>;
 pub type Disputes = HashMap<ClientID, Transaction>;
 
 #[derive(Debug, Clone)]
-pub struct RejectedTransaction;
+pub enum RejectedTransaction {
+    InvalidType,
+    InsufficientFounds,
+    IDNotFound,
+    InconsistentWithValueHeld,
+    InvalidInput,
+}
 
 pub struct Account {
     client_id: ClientID,
@@ -34,9 +40,9 @@ impl Account {
     // A deposit is a credit to the client's asset account, meaning it should increase the available and total funds of the client account.
     pub fn process_deposit(&mut self, transaction: &Transaction) -> Result<Transaction> {
         println!("Processing DEPOSIT {:?}", transaction);
-        let amount;        
+        let amount;
         match transaction.amount {
-            None => return Err(RejectedTransaction),
+            None => return Err(RejectedTransaction::InvalidType),
             Some(value) => amount = value,
         };
         self.available += amount;
@@ -49,7 +55,7 @@ impl Account {
         println!("Processing WITHDRAWAL {:?}", transaction);
         let amount;
         match transaction.amount {
-            None => return Err(RejectedTransaction),
+            None => return Err(RejectedTransaction::InvalidType),
             Some(value) => amount = value,
         };
         if self.available > amount {
@@ -57,7 +63,7 @@ impl Account {
             self.total -= amount;
             Ok(transaction.clone())
         } else {
-            Err(RejectedTransaction)
+            Err(RejectedTransaction::InsufficientFounds)
         }
     }
 
@@ -78,22 +84,22 @@ impl Account {
                     "Ignoring invalid disputed transaction ID {:?}",
                     transaction.id
                 );
-                Err(RejectedTransaction)
+                Err(RejectedTransaction::IDNotFound)
             }
             Some(tx) => {
                 let amount;
                 match tx.amount {
-                    None => return Err(RejectedTransaction),
+                    None => return Err(RejectedTransaction::InvalidType),
                     Some(value) => amount = value,
                 }
-                // Ok, but what the process should do  with a dispute that is greater than the available balance?
+                // Ok, but what the process should do with a dispute that is greater than the available balance?
                 // Until other clarification, I'm coding it to reject that claim.
                 if self.available > amount {
                     self.held += amount;
                     self.available -= amount;
                     Ok(transaction.clone())
                 } else {
-                    Err(RejectedTransaction)
+                    Err(RejectedTransaction::InsufficientFounds)
                 }
             }
         }
@@ -116,12 +122,12 @@ impl Account {
                     "Ignoring invalid resolved transaction ID {:?}",
                     transaction.id
                 );
-                Err(RejectedTransaction)
+                Err(RejectedTransaction::IDNotFound)
             }
             Some(tx) => {
                 let amount;
                 match tx.amount {
-                    None => return Err(RejectedTransaction),
+                    None => return Err(RejectedTransaction::InsufficientFounds),
                     Some(value) => amount = value,
                 }
                 // Ok, but what the process should do  with a dispute that is greater than the available balance?
@@ -130,7 +136,7 @@ impl Account {
                     // This means there is a transaction value inconsistency?
                     // Some kind of warning should be triggered for someone to supervise?
                     // Rejecting this resolve transaction to evade potential mistakes on account balances.
-                    Err(RejectedTransaction)
+                    Err(RejectedTransaction::InconsistentWithValueHeld)
                 } else {
                     self.held -= amount;
                     self.available += amount;
@@ -138,6 +144,11 @@ impl Account {
                 }
             }
         }
+    }
+
+    pub fn process_chargeback(&mut self, transaction: &Transaction) -> Result<Transaction> {
+        println!("Processing CHARGEBACK {:?}", transaction);
+        Err(RejectedTransaction::InvalidInput)
     }
 
     pub fn available_balance(&self) -> Amount {
