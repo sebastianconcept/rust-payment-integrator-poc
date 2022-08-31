@@ -5,7 +5,7 @@ Proof of Concept of a payment system in Rust for transaction processing and acco
 ![Tests](https://img.shields.io/badge/tests-9-green)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE.txt)
 
-## Features
+### Features
 
 - Single asset, multiple accounts.
 - Command line friendly.
@@ -21,7 +21,7 @@ Rejects invalid transactions:
 - Bubbles processing errors.
 - Extensible transaction types.
 
-## Supported Transaction Types
+### Supported Transaction Types
 
 ```rust
 pub enum TransactionType {
@@ -33,15 +33,15 @@ pub enum TransactionType {
 }
 ```
 
-# Run Unit Tests
+### Run Unit Tests
 The unit tests in this version use the shared transaction store and their assertions are expected to be reset before each one runs using a single thread:
 
     cargo test -- --test-threads=1
 
-# Build release version
+### Build release version
     cargo build --release
 
-# Command line help
+### Command line help
     ./target/release/integrator --help
 
 ```➜  integrator git:(wrap-up) ✗ ./target/release/integrator --help
