@@ -135,12 +135,12 @@ fn dispute_increase_disputed_balance_and_maintain_total() {
     app.process(tx1.unwrap());
     let tx2 = Transaction::from_record(StringRecord::from(vec!["deposit", "2", "5", "1.5"]));
     app.process(tx2.unwrap());
-    let tx3 = Transaction::from_record(StringRecord::from(vec!["dispute", "2", "6", "0.5 "]));
+    let tx3 = Transaction::from_record(StringRecord::from(vec!["dispute", "2", "4", ""]));
     app.process(tx3.unwrap());
     let account = app.get_account(client_id);
     let total = account.total_balance();
     let available = account.available_balance();
-    assert_eq!(available, total - 0.5f32)
+    assert_eq!(available, total - 2.0f32)
 }
 
 #[test]
@@ -152,18 +152,18 @@ fn resolve_decrease_held_balances_increase_available_and_maintain_total() {
     app.process(tx1.unwrap());
     let tx2 = Transaction::from_record(StringRecord::from(vec!["deposit", "2", "5", "1.5"]));
     app.process(tx2.unwrap());
-    let tx3 = Transaction::from_record(StringRecord::from(vec!["dispute", "2", "6", "0.5 "]));
+    let tx3 = Transaction::from_record(StringRecord::from(vec!["dispute", "2", "4", ""]));
     app.process(tx3.unwrap());
     let held_before = app.get_account(client_id).held_balance().clone();
     let total_before = app.get_account(client_id).total_balance().clone();
     assert_ne!(held_before, 0f32);
-    assert_eq!(held_before, 0.5f32);
+    assert_eq!(held_before, 2.0f32);
     assert_eq!(total_before, 3.5f32);
-    let tx4 = Transaction::from_record(StringRecord::from(vec!["resolve", "2", "6", ""]));
+    let tx4 = Transaction::from_record(StringRecord::from(vec!["resolve", "2", "4", ""]));
     app.process(tx4.unwrap());
     let held_after = app.get_account(client_id).held_balance().clone();
     let total_after = app.get_account(client_id).total_balance().clone();
-    assert_ne!(held_after, 0.5f32);
+    assert_ne!(held_after, 2.0f32);
     assert_eq!(held_after, 0f32);
     assert_eq!(total_after, 3.5f32);
 }

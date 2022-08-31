@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use csv::StringRecord;
 
 use crate::models::{
-    account::{Account, Result, RejectedTransaction},
+    account::{Account, RejectedTransaction, Result},
     transaction::{Amount, ClientID, Transaction, TransactionType},
     transactions::{transactions_set, TRANSACTIONS},
 };
@@ -27,12 +27,22 @@ impl App {
     }
 
     pub fn process(&mut self, transaction: Transaction) -> Result<Transaction> {
-        let tid = transaction.id.clone();
-        transactions_set(transaction);
-        let transactions = TRANSACTIONS
-            .read()
-            .expect("Could not get read access to the transactions store");
-        let tx = transactions.get(tid);
+        let tx;
+        let transactions;
+        if (transaction.kind == TransactionType::Dispute)
+            || (transaction.kind == TransactionType::Resolve)
+            || (transaction.kind == TransactionType::Chargeback)
+        {
+            tx = Some(&transaction);
+        } else {
+            // We only need to store deposits and withdrawals
+            let tid = transaction.id.clone();
+            transactions_set(transaction);
+            transactions = TRANSACTIONS
+                .read()
+                .expect("Could not get read access to the transactions store");
+            tx = transactions.get(tid);
+        }
         match tx {
             None => Err(RejectedTransaction::IDNotFound),
             Some(txn) => match txn.kind {
@@ -54,8 +64,7 @@ impl App {
     }
 
     fn process_deposit(&mut self, transaction: &Transaction) -> Result<Transaction> {
-        let client_id = transaction.client_id;
-        let account = self.get_account(client_id);
+        let account = self.get_account(transaction.client_id);
         account.process_deposit(transaction)
     }
 
