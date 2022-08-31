@@ -14,6 +14,7 @@ pub enum RejectedTransaction {
     IDNotFound,
     InconsistentWithValueHeld,
     InvalidInput,
+    TargetTransactionAmountMissing,
 }
 
 pub struct Account {
@@ -22,7 +23,6 @@ pub struct Account {
     held: Amount,
     total: Amount,
     locked: bool,
-    disputes: Disputes,
 }
 
 impl Account {
@@ -33,7 +33,6 @@ impl Account {
             held: 0f32,
             total: 0f32,
             locked: false,
-            disputes: Default::default(),
         }
     }
 
@@ -42,7 +41,7 @@ impl Account {
         println!("Processing DEPOSIT {:?}", transaction);
         let amount;
         match transaction.amount {
-            None => return Err(RejectedTransaction::InvalidType),
+            None => return Err(RejectedTransaction::TargetTransactionAmountMissing),
             Some(value) => amount = value,
         };
         self.available += amount;
@@ -55,7 +54,7 @@ impl Account {
         println!("Processing WITHDRAWAL {:?}", transaction);
         let amount;
         match transaction.amount {
-            None => return Err(RejectedTransaction::InvalidType),
+            None => return Err(RejectedTransaction::TargetTransactionAmountMissing),
             Some(value) => amount = value,
         };
         if self.available > amount {
@@ -89,7 +88,7 @@ impl Account {
             Some(tx) => {
                 let amount;
                 match tx.amount {
-                    None => return Err(RejectedTransaction::InvalidType),
+                    None => return Err(RejectedTransaction::TargetTransactionAmountMissing),
                     Some(value) => amount = value,
                 }
                 // Ok, but what the process should do with a dispute that is greater than the available balance?
@@ -127,7 +126,7 @@ impl Account {
             Some(tx) => {
                 let amount;
                 match tx.amount {
-                    None => return Err(RejectedTransaction::InsufficientFounds),
+                    None => return Err(RejectedTransaction::TargetTransactionAmountMissing),
                     Some(value) => amount = value,
                 }
                 // Ok, but what the process should do  with a dispute that is greater than the available balance?
@@ -146,9 +145,42 @@ impl Account {
         }
     }
 
+    // A chargeback is the final state of a dispute and represents the client reversing a transaction.
+    // Funds that were held have now been withdrawn.
+    // This means that the clients held funds and total funds should decrease by the amount previously disputed.
+    // If a chargeback occurs the client's account should be immediately frozen.
     pub fn process_chargeback(&mut self, transaction: &Transaction) -> Result<Transaction> {
         println!("Processing CHARGEBACK {:?}", transaction);
-        Err(RejectedTransaction::InvalidInput)
+        let transactions = TRANSACTIONS
+            .read()
+            .expect("Could not get read access to the transactions store");
+        let disputed_tx = transactions.get(transaction.id);
+        match disputed_tx {
+            None => {
+                println!(
+                    "Ignoring invalid chageback transaction ID {:?}",
+                    transaction.id
+                );
+                Err(RejectedTransaction::IDNotFound)
+            }
+            Some(tx) => {
+                let amount;
+                match tx.amount {
+                    None => return Err(RejectedTransaction::TargetTransactionAmountMissing),
+                    Some(value) => amount = value,
+                }
+
+                // What the integrator should do when there are insufficient funds for a chageback?
+                if amount > self.held {
+                  return Err(RejectedTransaction::InsufficientFounds);
+                } else {
+                  self.held -= amount;
+                  self.total -= amount;
+                  self.locked = true;  
+                }
+                Ok(transaction.clone())
+            }
+        }
     }
 
     pub fn available_balance(&self) -> Amount {
@@ -161,5 +193,9 @@ impl Account {
 
     pub fn total_balance(&self) -> Amount {
         self.total
+    }
+
+    pub fn is_locked(&self) -> bool {
+      self.locked
     }
 }
