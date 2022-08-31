@@ -17,9 +17,9 @@ fn main() {
             Ok(r) => match app.process_record(r) {
                 Ok((tx, account)) => {
                     let client = account.client_id;
-                    let available = account.available_balance();
-                    let held = account.held_balance();
-                    let total = account.total_balance();
+                    let available = format!("{:.4}", account.available_balance());
+                    let held = format!("{:.4}", account.held_balance());
+                    let total = format!("{:.4}", account.total_balance());
                     let locked = account.is_locked();
                     let message = format!("{},{},{},{},{}", client, available, held, total, locked);
                     OUTPUT
