@@ -92,4 +92,16 @@ impl App {
         let account = self.get_account(client_id);
         account.available_balance()
     }
+    pub fn get_held_balance(&mut self, client_id: ClientID) -> Amount {
+        let account = self.get_account(client_id);
+        account.held_balance()
+    }
+    pub fn get_total_balance(&mut self, client_id: ClientID) -> Amount {
+        let account = self.get_account(client_id);
+        account.total_balance()
+    }
+    pub fn is_locked(&mut self, client_id: ClientID) -> bool {
+        let account = self.get_account(client_id);
+        account.is_locked()
+    }
 }
