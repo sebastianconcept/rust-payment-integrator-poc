@@ -1,13 +1,8 @@
 use std::collections::HashMap;
 
+use crate::app::TRANSACTIONS;
+
 use super::transaction::{Transaction, TransactionID};
-
-use lazy_static::lazy_static;
-use mut_static::MutStatic;
-
-lazy_static! {
-    pub static ref TRANSACTIONS: MutStatic<Transactions> = MutStatic::from(Transactions::new());
-}
 
 pub struct Transactions {
     pub store: HashMap<TransactionID, Transaction>,

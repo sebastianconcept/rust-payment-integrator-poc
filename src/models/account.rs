@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::models::transactions::TRANSACTIONS;
+use crate::app::TRANSACTIONS;
 
 use super::transaction::{Amount, ClientID, Transaction};
 
@@ -17,8 +17,9 @@ pub enum RejectedTransaction {
     TargetTransactionAmountMissing,
 }
 
+#[derive(Debug, Clone)]
 pub struct Account {
-    client_id: ClientID,
+    pub client_id: ClientID,
     available: Amount,
     held: Amount,
     total: Amount,
@@ -37,8 +38,10 @@ impl Account {
     }
 
     // A deposit is a credit to the client's asset account, meaning it should increase the available and total funds of the client account.
-    pub fn process_deposit(&mut self, transaction: &Transaction) -> Result<Transaction> {
-        println!("Processing DEPOSIT {:?}", transaction);
+    pub fn process_deposit(
+        &mut self,
+        transaction: &Transaction,
+    ) -> Result<(Transaction, &mut Account)> {
         let amount;
         match transaction.amount {
             None => return Err(RejectedTransaction::TargetTransactionAmountMissing),
@@ -46,12 +49,14 @@ impl Account {
         };
         self.available += amount;
         self.total += amount;
-        Ok(transaction.clone())
+        Ok((transaction.clone(), self))
     }
 
     // A withdraw is a debit to the client's asset account, meaning it should decrease the available and total funds of the client account.
-    pub fn process_withdrawal(&mut self, transaction: &Transaction) -> Result<Transaction> {
-        println!("Processing WITHDRAWAL {:?}", transaction);
+    pub fn process_withdrawal(
+        &mut self,
+        transaction: &Transaction,
+    ) -> Result<(Transaction, &mut Account)> {
         let amount;
         match transaction.amount {
             None => return Err(RejectedTransaction::TargetTransactionAmountMissing),
@@ -60,7 +65,7 @@ impl Account {
         if self.available > amount {
             self.available -= amount;
             self.total -= amount;
-            Ok(transaction.clone())
+            Ok((transaction.clone(), self))
         } else {
             Err(RejectedTransaction::InsufficientFounds)
         }
@@ -71,7 +76,10 @@ impl Account {
     // This means that the clients available funds should decrease by the amount disputed,
     // their held funds should increase by the amount disputed,
     // while their total funds should remain the same.
-    pub fn process_dispute(&mut self, transaction: &Transaction) -> Result<Transaction> {
+    pub fn process_dispute(
+        &mut self,
+        transaction: &Transaction,
+    ) -> Result<(Transaction, &mut Account)> {
         println!("Processing DISPUTE {:?}", transaction);
         let transactions = TRANSACTIONS
             .read()
@@ -96,7 +104,7 @@ impl Account {
                 if self.available > amount {
                     self.held += amount;
                     self.available -= amount;
-                    Ok(transaction.clone())
+                    Ok((transaction.clone(), self))
                 } else {
                     Err(RejectedTransaction::InsufficientFounds)
                 }
@@ -109,7 +117,10 @@ impl Account {
     // This means that the clients held funds should decrease by the amount no longer disputed,
     // their available funds should increase by the amount no longer disputed,
     // and their total funds should remain the same.
-    pub fn process_resolve(&mut self, transaction: &Transaction) -> Result<Transaction> {
+    pub fn process_resolve(
+        &mut self,
+        transaction: &Transaction,
+    ) -> Result<(Transaction, &mut Account)> {
         println!("Processing RESOLVE {:?}", transaction);
         let transactions = TRANSACTIONS
             .read()
@@ -139,7 +150,7 @@ impl Account {
                 } else {
                     self.held -= amount;
                     self.available += amount;
-                    Ok(transaction.clone())
+                    Ok((transaction.clone(), self))
                 }
             }
         }
@@ -149,7 +160,10 @@ impl Account {
     // Funds that were held have now been withdrawn.
     // This means that the clients held funds and total funds should decrease by the amount previously disputed.
     // If a chargeback occurs the client's account should be immediately frozen.
-    pub fn process_chargeback(&mut self, transaction: &Transaction) -> Result<Transaction> {
+    pub fn process_chargeback(
+        &mut self,
+        transaction: &Transaction,
+    ) -> Result<(Transaction, &mut Account)> {
         println!("Processing CHARGEBACK {:?}", transaction);
         let transactions = TRANSACTIONS
             .read()
@@ -172,13 +186,13 @@ impl Account {
 
                 // What the integrator should do when there are insufficient funds for a chageback?
                 if amount > self.held {
-                  return Err(RejectedTransaction::InsufficientFounds);
+                    return Err(RejectedTransaction::InsufficientFounds);
                 } else {
-                  self.held -= amount;
-                  self.total -= amount;
-                  self.locked = true;  
+                    self.held -= amount;
+                    self.total -= amount;
+                    self.locked = true;
                 }
-                Ok(transaction.clone())
+                Ok((transaction.clone(), self))
             }
         }
     }
@@ -196,6 +210,6 @@ impl Account {
     }
 
     pub fn is_locked(&self) -> bool {
-      self.locked
+        self.locked
     }
 }

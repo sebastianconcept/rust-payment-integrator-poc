@@ -4,9 +4,18 @@ use csv::StringRecord;
 
 use crate::models::{
     account::{Account, RejectedTransaction, Result},
+    output::Output,
     transaction::{Amount, ClientID, Transaction, TransactionType},
-    transactions::{transactions_set, TRANSACTIONS},
+    transactions::{transactions_set, Transactions},
 };
+
+use lazy_static::lazy_static;
+use mut_static::MutStatic;
+
+lazy_static! {
+    pub static ref TRANSACTIONS: MutStatic<Transactions> = MutStatic::from(Transactions::new());
+    pub static ref OUTPUT: MutStatic<Output> = MutStatic::from(Output::new());
+}
 
 pub struct App {
     accounts: HashMap<ClientID, Account>,
@@ -26,7 +35,7 @@ impl App {
             .or_insert_with(|| Account::new(client_id))
     }
 
-    pub fn process(&mut self, transaction: Transaction) -> Result<Transaction> {
+    pub fn process(&mut self, transaction: Transaction) -> Result<(Transaction, &mut Account)> {
         let tx;
         let transactions;
         if (transaction.kind == TransactionType::Dispute)
@@ -55,7 +64,7 @@ impl App {
         }
     }
 
-    pub fn process_record(&mut self, record: StringRecord) -> Result<Transaction> {
+    pub fn process_record(&mut self, record: StringRecord) -> Result<(Transaction, &mut Account)> {
         let transaction = Transaction::from_record(record);
         match transaction {
             Err(err) => Err(err),
@@ -63,27 +72,42 @@ impl App {
         }
     }
 
-    fn process_deposit(&mut self, transaction: &Transaction) -> Result<Transaction> {
+    fn process_deposit(
+        &mut self,
+        transaction: &Transaction,
+    ) ->  Result<(Transaction, &mut Account)> {
         let account = self.get_account(transaction.client_id);
         account.process_deposit(transaction)
     }
 
-    fn process_withdrawal(&mut self, transaction: &Transaction) -> Result<Transaction> {
+    fn process_withdrawal(
+        &mut self,
+        transaction: &Transaction,
+    ) -> Result<(Transaction, &mut Account)> {
         let account = self.get_account(transaction.client_id);
         account.process_withdrawal(transaction)
     }
 
-    fn process_dispute(&mut self, transaction: &Transaction) -> Result<Transaction> {
+    fn process_dispute(
+        &mut self,
+        transaction: &Transaction,
+    ) -> Result<(Transaction, &mut Account)> {
         let account = self.get_account(transaction.client_id);
         account.process_dispute(transaction)
     }
 
-    fn process_resolve(&mut self, transaction: &Transaction) -> Result<Transaction> {
+    fn process_resolve(
+        &mut self,
+        transaction: &Transaction,
+    ) -> Result<(Transaction, &mut Account)> {
         let account = self.get_account(transaction.client_id);
         account.process_resolve(transaction)
     }
 
-    fn process_chargeback(&mut self, transaction: &Transaction) -> Result<Transaction> {
+    fn process_chargeback(
+        &mut self,
+        transaction: &Transaction,
+    ) -> Result<(Transaction, &mut Account)> {
         let account = self.get_account(transaction.client_id);
         account.process_chargeback(transaction)
     }
@@ -91,5 +115,20 @@ impl App {
     pub fn get_available_balance(&mut self, client_id: ClientID) -> Amount {
         let account = self.get_account(client_id);
         account.available_balance()
+    }
+
+    pub fn get_held_balance(&mut self, client_id: ClientID) -> Amount {
+        let account = self.get_account(client_id);
+        account.held_balance()
+    }
+
+    pub fn get_total_balance(&mut self, client_id: ClientID) -> Amount {
+        let account = self.get_account(client_id);
+        account.total_balance()
+    }
+
+    pub fn is_locked(&mut self, client_id: ClientID) -> bool {
+        let account = self.get_account(client_id);
+        account.is_locked()
     }
 }

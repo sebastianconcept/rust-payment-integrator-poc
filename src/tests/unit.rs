@@ -1,12 +1,12 @@
 use csv::StringRecord;
 
 use crate::{
-    app::App,
+    app::{App, TRANSACTIONS},
     cli::get_command,
     csv::get_transactions_iter,
     models::{
         transaction::{Transaction, TransactionType},
-        transactions::{transactions_size, TRANSACTIONS},
+        transactions::{transactions_size},
     },
 };
 
@@ -99,7 +99,9 @@ fn deposit_can_increase_account_balance() {
     let client_id = tx2.as_ref().unwrap().client_id;
     app.process(tx2.unwrap());
     let after2 = app.get_available_balance(client_id);
-    assert_eq!(after2, 4.5f32)
+    assert_eq!(after2, 4.5f32);
+    assert_eq!(app.get_held_balance(client_id) + app.get_available_balance(client_id), app.get_total_balance(client_id));
+    assert_eq!(app.is_locked(client_id), false);
 }
 
 #[test]
@@ -123,7 +125,9 @@ fn withdrawal_can_decrease_account_balance() {
     let after2 = app.get_available_balance(client_id);
     assert_eq!(after2, 3.0 - 1.3f32);
     let size = transactions_size();
-    assert_eq!(size, 2)
+    assert_eq!(size, 2);
+    assert_eq!(app.get_held_balance(client_id) + app.get_available_balance(client_id), app.get_total_balance(client_id));
+    assert_eq!(app.is_locked(client_id), false);
 }
 
 #[test]
@@ -140,7 +144,9 @@ fn dispute_increase_disputed_balance_and_maintain_total() {
     let account = app.get_account(client_id);
     let total = account.total_balance();
     let available = account.available_balance();
-    assert_eq!(available, total - 2.0f32)
+    assert_eq!(available, total - 2.0f32);
+    assert_eq!(app.get_held_balance(client_id) + app.get_available_balance(client_id), app.get_total_balance(client_id));
+    assert_eq!(app.is_locked(client_id), false);
 }
 
 #[test]
@@ -166,6 +172,8 @@ fn resolve_decrease_held_balances_increase_available_and_maintain_total() {
     assert_ne!(held_after, 2.0f32);
     assert_eq!(held_after, 0f32);
     assert_eq!(total_after, 3.5f32);
+    assert_eq!(app.get_held_balance(client_id) + app.get_available_balance(client_id), app.get_total_balance(client_id));
+    assert_eq!(app.is_locked(client_id), false);
 }
 
 
@@ -194,4 +202,6 @@ fn chargeback_decreases_held_and_total_balances_and_locks_account() {
     assert_ne!(held_after, 2f32);
     assert_eq!(held_after, 0f32);
     assert_eq!(total_after, 1.5f32);
+    assert_eq!(app.get_held_balance(client_id) + app.get_available_balance(client_id), app.get_total_balance(client_id));
+    assert_eq!(app.is_locked(client_id), true);
 }
