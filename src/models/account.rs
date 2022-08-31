@@ -19,7 +19,7 @@ pub enum RejectedTransaction {
 
 #[derive(Debug, Clone)]
 pub struct Account {
-    client_id: ClientID,
+    pub client_id: ClientID,
     available: Amount,
     held: Amount,
     total: Amount,

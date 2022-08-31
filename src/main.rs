@@ -16,7 +16,12 @@ fn main() {
         match record {
             Ok(r) => match app.process_record(r) {
                 Ok((tx, account)) => {
-                    let message = format!("{:?} {:?}", tx, account);
+                    let client = account.client_id;
+                    let available = account.available_balance();
+                    let held = account.held_balance();
+                    let total = account.total_balance();
+                    let locked = account.is_locked();
+                    let message = format!("{},{},{},{},{}", client, available, held, total, locked);
                     OUTPUT
                         .write()
                         .expect("Failed to get output write access")
