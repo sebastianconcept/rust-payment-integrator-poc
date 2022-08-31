@@ -129,8 +129,8 @@ impl Account {
                     None => return Err(RejectedTransaction::TargetTransactionAmountMissing),
                     Some(value) => amount = value,
                 }
-                // Ok, but what the process should do  with a dispute that is greater than the available balance?
-                // Until other clarification, I'm coding it to reject that claim.
+                // Ok, but what the process should do with a resolve that has a greater amount value than the held balance?
+                // Until other clarification, I'm coding it to reject that resolution.
                 if amount > self.held {
                     // This means there is a transaction value inconsistency?
                     // Some kind of warning should be triggered for someone to supervise?
