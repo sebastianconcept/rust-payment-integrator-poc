@@ -1,12 +1,12 @@
 use csv::StringRecord;
 
 use crate::{
-    app::App,
+    app::{App, TRANSACTIONS},
     cli::get_command,
     csv::get_transactions_iter,
     models::{
         transaction::{Transaction, TransactionType},
-        transactions::{transactions_size, TRANSACTIONS},
+        transactions::{transactions_size},
     },
 };
 

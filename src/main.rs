@@ -3,7 +3,9 @@ extern crate lazy_static;
 extern crate mut_static;
 
 use integrator::{
-    app::App, cli::get_input_filename, csv::get_transactions_iter,
+    app::{App, OUTPUT},
+    cli::get_input_filename,
+    csv::get_transactions_iter,
 };
 
 fn main() {
@@ -12,9 +14,16 @@ fn main() {
     let mut reader = get_transactions_iter(input_filename);
     for record in reader.records() {
         match record {
-            Ok(r) => {
-                app.process_record(r);
-            }
+            Ok(r) => match app.process_record(r) {
+                Ok((tx, account)) => {
+                    let message = format!("{:?} {:?}", tx, account);
+                    OUTPUT
+                        .write()
+                        .expect("Failed to get output write access")
+                        .write(message)
+                }
+                _RejectedTransaction => {}
+            },
             Err(_) => {}
         };
     }
