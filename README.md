@@ -64,6 +64,11 @@ OPTIONS:
 
 ## <div id="design-notes">Design Notes</div>
 
+- The program models the payments processing using the aid of these objects:
+  - `App`. The spot to start taking input and sending it to collaborators for processing and output generation.
+  - `Transaction`. The main model for the different types of operations to process. It can be instantiated from a parsed CSV record using `from_record`. 
+  - `Transactions`. It's a helper object for keeping a store support dedicated to transactions. If in the future the transactions have to change its support, that can be conveniently refactored only from there.
+  - `Account`. The accounts belong to the app object and they help to keep correct state of a client's account and process transactions.
 - I've used TDD for this program to ensure result correctness and at the same time to help me to incrementally add functionality detecting any regression as I need to introduce changes. So far there are 9 unit tests with what I think are self-evident, unambiguous names to the most fundamental functionality.
 
 - `Amount`, `ClientID` and `TransactionID` have dedicated types to ensure correctness and allow a change from a single point in code in case of future type migrations.
