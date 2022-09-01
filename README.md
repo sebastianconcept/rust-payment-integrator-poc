@@ -101,3 +101,28 @@ test tests::unit::withdrawal_can_decrease_account_balance ... ok
 test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 ```
 
+## Scenarios
+
+In the `input` directory, I've added a handful of simple scenarios which incrementally cover the types of transactions. 
+
+For example:
+
+    cargo run -- input/scenario5.csv
+
+Produces:
+```
+1,1.0000,0.0000,1.0000,false
+2,2.0000,0.0000,2.0000,false
+1,3.0000,0.0000,3.0000,false
+1,1.5000,0.0000,1.5000,false
+1,0.5000,1.0000,1.5000,false
+1,3.5000,1.0000,4.5000,false
+1,3.5000,0.0000,3.5000,true
+```
+Which is the output of having processed:
+- Deposits,
+- Withdrawals, 
+- Disputes, 
+- Resolution of one of the disputes, 
+- A chargeback of the other dispute and
+- Rejecting a deposit after the chargeback made the account to get locked
