@@ -80,7 +80,6 @@ impl Account {
         &mut self,
         transaction: &Transaction,
     ) -> Result<(Transaction, &mut Account)> {
-        println!("Processing DISPUTE {:?}", transaction);
         let transactions = TRANSACTIONS
             .read()
             .expect("Could not get read access to the transactions store");
@@ -121,7 +120,6 @@ impl Account {
         &mut self,
         transaction: &Transaction,
     ) -> Result<(Transaction, &mut Account)> {
-        println!("Processing RESOLVE {:?}", transaction);
         let transactions = TRANSACTIONS
             .read()
             .expect("Could not get read access to the transactions store");
@@ -164,7 +162,6 @@ impl Account {
         &mut self,
         transaction: &Transaction,
     ) -> Result<(Transaction, &mut Account)> {
-        println!("Processing CHARGEBACK {:?}", transaction);
         let transactions = TRANSACTIONS
             .read()
             .expect("Could not get read access to the transactions store");
