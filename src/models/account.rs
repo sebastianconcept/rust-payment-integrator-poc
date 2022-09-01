@@ -15,6 +15,7 @@ pub enum RejectedTransaction {
     InconsistentWithValueHeld,
     InvalidInput,
     TargetTransactionAmountMissing,
+    AccountLocked,
 }
 
 #[derive(Debug, Clone)]
@@ -42,6 +43,9 @@ impl Account {
         &mut self,
         transaction: &Transaction,
     ) -> Result<(Transaction, &mut Account)> {
+        if self.locked {
+            return Err(RejectedTransaction::AccountLocked);
+        };
         let amount;
         match transaction.amount {
             None => return Err(RejectedTransaction::TargetTransactionAmountMissing),
@@ -57,6 +61,9 @@ impl Account {
         &mut self,
         transaction: &Transaction,
     ) -> Result<(Transaction, &mut Account)> {
+        if self.locked {
+            return Err(RejectedTransaction::AccountLocked);
+        };
         let amount;
         match transaction.amount {
             None => return Err(RejectedTransaction::TargetTransactionAmountMissing),
@@ -80,7 +87,9 @@ impl Account {
         &mut self,
         transaction: &Transaction,
     ) -> Result<(Transaction, &mut Account)> {
-        println!("Processing DISPUTE {:?}", transaction);
+        if self.locked {
+            return Err(RejectedTransaction::AccountLocked);
+        };
         let transactions = TRANSACTIONS
             .read()
             .expect("Could not get read access to the transactions store");
@@ -121,7 +130,9 @@ impl Account {
         &mut self,
         transaction: &Transaction,
     ) -> Result<(Transaction, &mut Account)> {
-        println!("Processing RESOLVE {:?}", transaction);
+        if self.locked {
+            return Err(RejectedTransaction::AccountLocked);
+        };
         let transactions = TRANSACTIONS
             .read()
             .expect("Could not get read access to the transactions store");
@@ -164,7 +175,9 @@ impl Account {
         &mut self,
         transaction: &Transaction,
     ) -> Result<(Transaction, &mut Account)> {
-        println!("Processing CHARGEBACK {:?}", transaction);
+        if self.locked {
+            return Err(RejectedTransaction::AccountLocked);
+        };
         let transactions = TRANSACTIONS
             .read()
             .expect("Could not get read access to the transactions store");
