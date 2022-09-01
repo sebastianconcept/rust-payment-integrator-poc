@@ -85,7 +85,7 @@ Executing:
 
     cargo test -- --test-threads=1
 
-Should produce:
+Will show:
 ```
 running 9 tests
 test tests::unit::can_parse_a_deposit_command ... ok
