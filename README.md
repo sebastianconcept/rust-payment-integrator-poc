@@ -36,9 +36,9 @@ pub enum TransactionType {
 Additional [Design Notes Here](#design-notes).
 
 ## Run Unit Tests
-The unit tests in this version use the shared transaction store and their assertions are expected to be reset before each one runs using a single thread:
+The unit tests can be ran with multiple threads:
 
-    cargo test -- --test-threads=1
+    cargo test
 
 ## Build release version
     cargo build --release
@@ -83,7 +83,7 @@ OPTIONS:
 ## Unit tests
 Executing:
 
-    cargo test -- --test-threads=1
+    cargo test
 
 Will show:
 ```
