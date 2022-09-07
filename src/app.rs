@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+    cell::{RefCell, RefMut},
+    collections::HashMap,
+};
 
 use csv::StringRecord;
 
@@ -6,38 +9,45 @@ use crate::models::{
     account::{Account, RejectedTransaction, Result},
     output::Output,
     transaction::{Amount, ClientID, Transaction, TransactionType},
-    transactions::{transactions_set, Transactions},
+    transactions::{self, Transactions},
 };
 
 use lazy_static::lazy_static;
 use mut_static::MutStatic;
 
 lazy_static! {
-    pub static ref TRANSACTIONS: MutStatic<Transactions> = MutStatic::from(Transactions::new());
     pub static ref OUTPUT: MutStatic<Output> = MutStatic::from(Output::new());
 }
 
+type Accounts = HashMap<ClientID, Account>;
+
+#[derive(Debug, Clone)]
 pub struct App {
-    accounts: HashMap<ClientID, Account>,
+    accounts: RefCell<Accounts>,
+    transactions: RefCell<Transactions>,
 }
 
 impl App {
     pub fn new() -> Self {
         Self {
-            accounts: Default::default(),
+            accounts: RefCell::new(Default::default()),
+            transactions: RefCell::new(Transactions::new()),
         }
     }
 
     // Returns an ensured Account for the given ID.
-    pub fn get_account(&mut self, client_id: ClientID) -> &mut Account {
-        self.accounts
-            .entry(client_id)
-            .or_insert_with(|| Account::new(client_id))
+    pub fn get_account(&self, client_id: ClientID) -> RefMut<'_, Account> {
+        let accounts = self.accounts.borrow_mut();
+        RefMut::map(accounts, |hashmap| {
+            hashmap
+                .entry(client_id)
+                .or_insert_with(|| Account::new(client_id))
+        })
     }
 
-    pub fn process(&mut self, transaction: Transaction) -> Result<(Transaction, &mut Account)> {
+    pub fn process(&self, transaction: Transaction) -> Result<Transaction> {
+        let txns;
         let tx;
-        let transactions;
         if (transaction.kind == TransactionType::Dispute)
             || (transaction.kind == TransactionType::Resolve)
             || (transaction.kind == TransactionType::Chargeback)
@@ -46,11 +56,9 @@ impl App {
         } else {
             // We only need to store deposits and withdrawals
             let tid = transaction.id.clone();
-            transactions_set(transaction);
-            transactions = TRANSACTIONS
-                .read()
-                .expect("Could not get read access to the transactions store");
-            tx = transactions.get(tid);
+            self.transactions.borrow_mut().set(transaction);
+            txns = self.transactions.borrow();
+            tx = txns.get(tid);
         }
         match tx {
             None => Err(RejectedTransaction::IDNotFound),
@@ -60,11 +68,12 @@ impl App {
                 TransactionType::Dispute => self.process_dispute(txn),
                 TransactionType::Resolve => self.process_resolve(txn),
                 TransactionType::Chargeback => self.process_chargeback(txn),
+                // _ => Err(RejectedTransaction::InvalidType),
             },
         }
     }
 
-    pub fn process_record(&mut self, record: StringRecord) -> Result<(Transaction, &mut Account)> {
+    pub fn process_record(&mut self, record: StringRecord) -> Result<Transaction> {
         let transaction = Transaction::from_record(record);
         match transaction {
             Err(err) => Err(err),
@@ -72,44 +81,38 @@ impl App {
         }
     }
 
-    fn process_deposit(
-        &mut self,
-        transaction: &Transaction,
-    ) ->  Result<(Transaction, &mut Account)> {
-        let account = self.get_account(transaction.client_id);
-        account.process_deposit(transaction)
+    fn process_deposit(&self, transaction: &Transaction) -> Result<Transaction> {
+        let mut account = self.get_account(transaction.client_id);
+        (*account).process_deposit(transaction)
     }
 
-    fn process_withdrawal(
-        &mut self,
-        transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
-        let account = self.get_account(transaction.client_id);
-        account.process_withdrawal(transaction)
+    fn process_withdrawal(&self, transaction: &Transaction) -> Result<Transaction> {
+        let mut account = self.get_account(transaction.client_id);
+        (*account).process_withdrawal(transaction)
     }
 
     fn process_dispute(
-        &mut self,
+        &self,
         transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
-        let account = self.get_account(transaction.client_id);
-        account.process_dispute(transaction)
+    ) -> Result<Transaction> {
+        let mut account = self.get_account(transaction.client_id);
+        (*account).process_dispute(transaction, &mut self.transactions.borrow_mut())
     }
 
     fn process_resolve(
-        &mut self,
+        &self,
         transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
-        let account = self.get_account(transaction.client_id);
-        account.process_resolve(transaction)
+    ) -> Result<Transaction> {
+        let mut account = self.get_account(transaction.client_id);
+        (*account).process_resolve(transaction, &mut self.transactions.borrow_mut())
     }
 
     fn process_chargeback(
-        &mut self,
+        &self,
         transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
-        let account = self.get_account(transaction.client_id);
-        account.process_chargeback(transaction)
+    ) -> Result<Transaction> {
+        let mut account = self.get_account(transaction.client_id);
+        (*account).process_chargeback(transaction, &mut self.transactions.borrow_mut())
     }
 
     pub fn get_available_balance(&mut self, client_id: ClientID) -> Amount {
@@ -130,5 +133,9 @@ impl App {
     pub fn is_locked(&mut self, client_id: ClientID) -> bool {
         let account = self.get_account(client_id);
         account.is_locked()
+    }
+
+    pub fn transactions_size(&self) -> usize {
+        self.transactions.borrow().size()
     }
 }

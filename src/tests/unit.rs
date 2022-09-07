@@ -1,21 +1,13 @@
 use csv::StringRecord;
 
 use crate::{
-    app::{App, TRANSACTIONS},
+    app::{App},
     cli::get_command,
     csv::get_transactions_iter,
     models::{
         transaction::{Transaction, TransactionType},
-        transactions::{transactions_size},
     },
 };
-
-fn transactions_reset() {
-    TRANSACTIONS
-        .write()
-        .expect("Cannot write transactions")
-        .reset();
-}
 
 #[test]
 fn can_parse_input_filename_from_command_line() {
@@ -79,7 +71,6 @@ fn can_parse_a_withdrawal_command() {
 
 #[test]
 fn deposit_can_increase_account_balance() {
-    transactions_reset();
     let mut app = App::new();
     let record = StringRecord::from(vec!["deposit", "    2", "5      ", " 3.0 "]);
     let tx = Transaction::from_record(record);
@@ -106,7 +97,6 @@ fn deposit_can_increase_account_balance() {
 
 #[test]
 fn withdrawal_can_decrease_account_balance() {
-    transactions_reset();
     let mut app = App::new();
     let record = StringRecord::from(vec!["deposit", "    2", "5      ", " 3.0 "]);
     let tx = Transaction::from_record(record);
@@ -124,7 +114,7 @@ fn withdrawal_can_decrease_account_balance() {
     app.process(tx2.unwrap());
     let after2 = app.get_available_balance(client_id);
     assert_eq!(after2, 3.0 - 1.3f32);
-    let size = transactions_size();
+    let size = app.transactions_size();
     assert_eq!(size, 2);
     assert_eq!(app.get_held_balance(client_id) + app.get_available_balance(client_id), app.get_total_balance(client_id));
     assert_eq!(app.is_locked(client_id), false);
@@ -132,7 +122,6 @@ fn withdrawal_can_decrease_account_balance() {
 
 #[test]
 fn dispute_increase_disputed_balance_and_maintain_total() {
-    transactions_reset();
     let mut app = App::new();
     let tx1 = Transaction::from_record(StringRecord::from(vec!["deposit", "2", "4", "2.0 "]));
     let client_id = tx1.as_ref().unwrap().client_id;
@@ -141,7 +130,8 @@ fn dispute_increase_disputed_balance_and_maintain_total() {
     app.process(tx2.unwrap());
     let tx3 = Transaction::from_record(StringRecord::from(vec!["dispute", "2", "4", ""]));
     app.process(tx3.unwrap());
-    let account = app.get_account(client_id);
+    let a = app.clone();
+    let account = a.get_account(client_id);
     let total = account.total_balance();
     let available = account.available_balance();
     assert_eq!(available, total - 2.0f32);
@@ -151,7 +141,6 @@ fn dispute_increase_disputed_balance_and_maintain_total() {
 
 #[test]
 fn resolve_decrease_held_balances_increase_available_and_maintain_total() {
-    transactions_reset();
     let mut app = App::new();
     let tx1 = Transaction::from_record(StringRecord::from(vec!["deposit", "2", "4", "2.0 "]));
     let client_id = tx1.as_ref().unwrap().client_id;
@@ -180,7 +169,6 @@ fn resolve_decrease_held_balances_increase_available_and_maintain_total() {
 
 #[test]
 fn chargeback_decreases_held_and_total_balances_and_locks_account() {
-    transactions_reset();
     let mut app = App::new();
     let tx1 = Transaction::from_record(StringRecord::from(vec!["deposit", "2", "4", "2.0 "]));
     let client_id = tx1.as_ref().unwrap().client_id;

@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 
-use crate::app::TRANSACTIONS;
-
-use super::transaction::{Amount, ClientID, Transaction};
+use super::{transaction::{Amount, ClientID, Transaction}, transactions::{Transactions, self}};
 
 pub type Result<T> = std::result::Result<T, RejectedTransaction>;
 pub type Disputes = HashMap<ClientID, Transaction>;
@@ -41,8 +39,8 @@ impl Account {
     // A deposit is a credit to the client's asset account, meaning it should increase the available and total funds of the client account.
     pub fn process_deposit(
         &mut self,
-        transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
+        transaction: &Transaction
+    ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
         };
@@ -53,14 +51,14 @@ impl Account {
         };
         self.available += amount;
         self.total += amount;
-        Ok((transaction.clone(), self))
+        Ok(transaction.clone())
     }
 
     // A withdraw is a debit to the client's asset account, meaning it should decrease the available and total funds of the client account.
     pub fn process_withdrawal(
         &mut self,
         transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
+    ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
         };
@@ -72,7 +70,7 @@ impl Account {
         if self.available > amount {
             self.available -= amount;
             self.total -= amount;
-            Ok((transaction.clone(), self))
+            Ok(transaction.clone())
         } else {
             Err(RejectedTransaction::InsufficientFounds)
         }
@@ -86,13 +84,11 @@ impl Account {
     pub fn process_dispute(
         &mut self,
         transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
+        transactions: &mut Transactions
+    ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
         };
-        let transactions = TRANSACTIONS
-            .read()
-            .expect("Could not get read access to the transactions store");
         let disputed_tx = transactions.get(transaction.id);
         match disputed_tx {
             None => {
@@ -113,7 +109,7 @@ impl Account {
                 if self.available > amount {
                     self.held += amount;
                     self.available -= amount;
-                    Ok((transaction.clone(), self))
+                    Ok(transaction.clone())
                 } else {
                     Err(RejectedTransaction::InsufficientFounds)
                 }
@@ -129,13 +125,11 @@ impl Account {
     pub fn process_resolve(
         &mut self,
         transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
+        transactions: &mut Transactions
+    ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
         };
-        let transactions = TRANSACTIONS
-            .read()
-            .expect("Could not get read access to the transactions store");
         let resolved_tx = transactions.get(transaction.id);
         match resolved_tx {
             None => {
@@ -161,7 +155,7 @@ impl Account {
                 } else {
                     self.held -= amount;
                     self.available += amount;
-                    Ok((transaction.clone(), self))
+                    Ok(transaction.clone())
                 }
             }
         }
@@ -174,13 +168,11 @@ impl Account {
     pub fn process_chargeback(
         &mut self,
         transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
+        transactions: &mut Transactions
+    ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
         };
-        let transactions = TRANSACTIONS
-            .read()
-            .expect("Could not get read access to the transactions store");
         let disputed_tx = transactions.get(transaction.id);
         match disputed_tx {
             None => {
@@ -205,7 +197,7 @@ impl Account {
                     self.total -= amount;
                     self.locked = true;
                 }
-                Ok((transaction.clone(), self))
+                Ok(transaction.clone())
             }
         }
     }

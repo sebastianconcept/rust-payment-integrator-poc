@@ -15,8 +15,9 @@ fn main() {
     for record in reader.records() {
         match record {
             Ok(r) => match app.process_record(r) {
-                Ok((tx, account)) => {
-                    let client = account.client_id;
+                Ok(tx) => {
+                    let client = tx.client_id;
+                    let account = app.get_account(client);
                     let available = format!("{:.4}", account.available_balance());
                     let held = format!("{:.4}", account.held_balance());
                     let total = format!("{:.4}", account.total_balance());
