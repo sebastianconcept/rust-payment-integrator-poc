@@ -3,7 +3,7 @@ extern crate lazy_static;
 extern crate mut_static;
 
 use integrator::{
-    app::{App, OUTPUT},
+    app::{App},
     cli::get_input_filename,
     csv::get_transactions_iter,
 };
@@ -23,10 +23,7 @@ fn main() {
                     let total = format!("{:.4}", account.total_balance());
                     let locked = account.is_locked();
                     let message = format!("{},{},{},{},{}", client, available, held, total, locked);
-                    OUTPUT
-                        .write()
-                        .expect("Failed to get output write access")
-                        .write(message)
+                    app.output_write(message);
                 }
                 _RejectedTransaction => {}
             },
