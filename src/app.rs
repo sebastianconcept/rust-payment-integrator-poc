@@ -9,15 +9,8 @@ use crate::models::{
     account::{Account, RejectedTransaction, Result},
     output::Output,
     transaction::{Amount, ClientID, Transaction, TransactionType},
-    transactions::{self, Transactions},
+    transactions::{Transactions},
 };
-
-use lazy_static::lazy_static;
-use mut_static::MutStatic;
-
-lazy_static! {
-    pub static ref OUTPUT: MutStatic<Output> = MutStatic::from(Output::new());
-}
 
 type Accounts = HashMap<ClientID, Account>;
 
@@ -25,6 +18,7 @@ type Accounts = HashMap<ClientID, Account>;
 pub struct App {
     accounts: RefCell<Accounts>,
     transactions: RefCell<Transactions>,
+    output: Output,
 }
 
 impl App {
@@ -32,6 +26,7 @@ impl App {
         Self {
             accounts: RefCell::new(Default::default()),
             transactions: RefCell::new(Transactions::new()),
+            output: Output::new()
         }
     }
 
@@ -68,7 +63,6 @@ impl App {
                 TransactionType::Dispute => self.process_dispute(txn),
                 TransactionType::Resolve => self.process_resolve(txn),
                 TransactionType::Chargeback => self.process_chargeback(txn),
-                // _ => Err(RejectedTransaction::InvalidType),
             },
         }
     }
@@ -137,5 +131,9 @@ impl App {
 
     pub fn transactions_size(&self) -> usize {
         self.transactions.borrow().size()
+    }
+
+    pub fn output_write(&self, msg: String) {
+        self.output.write(msg);
     }
 }

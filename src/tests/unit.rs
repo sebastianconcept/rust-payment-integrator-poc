@@ -33,8 +33,10 @@ fn can_read_a_record_streamed_from_a_csv_input_file() {
             Err(_) => {}
         }
     }
-    assert_eq!(records.len(), 5);
-    assert_eq!(records[0].get(0).unwrap(), "deposit".to_string());
+    assert_eq!(records.len(), 6);
+    assert_eq!(records[0].get(0).unwrap(), "type".to_string());
+    assert_eq!(records[0].get(1).unwrap(), "client".to_string());
+    assert_eq!(records[1].get(0).unwrap(), "deposit".to_string());
 }
 
 #[test]
