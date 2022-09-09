@@ -4,7 +4,6 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
-
     {
       "type": "lldb",
       "request": "launch",
@@ -64,7 +63,7 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug executable with scenario",
+      "name": "Debug scenario",
       "cargo": {
         "args": [
           "build",
@@ -77,9 +76,9 @@
         }
       },
       "args": [
-        "./input/scenario6.csv"
+        "./input/scenario7.csv"
       ],
       "cwd": "${workspaceFolder}"
-    },    
+    }    
   ]
 }
