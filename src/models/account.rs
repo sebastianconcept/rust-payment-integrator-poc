@@ -92,10 +92,7 @@ impl Account {
         let disputed_tx = transactions.get(transaction.id);
         match disputed_tx {
             None => {
-                println!(
-                    "Ignoring invalid disputed transaction ID {:?}",
-                    transaction.id
-                );
+                // Ignoring invalid disputed transaction ID
                 Err(RejectedTransaction::IDNotFound)
             }
             Some(tx) => {
@@ -133,10 +130,7 @@ impl Account {
         let resolved_tx = transactions.get(transaction.id);
         match resolved_tx {
             None => {
-                println!(
-                    "Ignoring invalid resolved transaction ID {:?}",
-                    transaction.id
-                );
+                // Ignoring invalid resolved transaction ID
                 Err(RejectedTransaction::IDNotFound)
             }
             Some(tx) => {
@@ -176,10 +170,7 @@ impl Account {
         let disputed_tx = transactions.get(transaction.id);
         match disputed_tx {
             None => {
-                println!(
-                    "Ignoring invalid chageback transaction ID {:?}",
-                    transaction.id
-                );
+                // Ignoring invalid chargeback transaction ID
                 Err(RejectedTransaction::IDNotFound)
             }
             Some(tx) => {
