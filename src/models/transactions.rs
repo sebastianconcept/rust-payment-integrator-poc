@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
-use crate::app::TRANSACTIONS;
-
 use super::transaction::{Transaction, TransactionID};
 
+#[derive(Debug, Clone)]
 pub struct Transactions {
     pub store: HashMap<TransactionID, Transaction>,
 }
@@ -15,7 +14,8 @@ impl Transactions {
         }
     }
 
-    pub fn set(&mut self, txid: TransactionID, transaction: Transaction) -> Option<TransactionID> {
+    pub fn set(&mut self, transaction: Transaction) -> Option<TransactionID> {
+        let txid = transaction.id;
         self.store.insert(txid, transaction);
         Some(txid)
     }
@@ -37,16 +37,4 @@ impl Transactions {
     }
 }
 
-pub fn transactions_size() -> usize {
-    TRANSACTIONS
-        .read()
-        .expect("Could not get read access to the transactions store")
-        .size()
-}
 
-pub fn transactions_set(transaction: Transaction) {
-    TRANSACTIONS
-        .write()
-        .expect("Could not get write access to the transactions store")
-        .set(transaction.id, transaction);
-}

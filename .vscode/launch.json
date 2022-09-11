@@ -59,6 +59,26 @@
       },
       "args": [],
       "cwd": "${workspaceFolder}"
-    }
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug scenario",
+      "cargo": {
+        "args": [
+          "build",
+          "--bin=integrator",
+          "--package=integrator"
+        ],
+        "filter": {
+          "name": "integrator",
+          "kind": "bin"
+        }
+      },
+      "args": [
+        "./input/scenario15.csv"
+      ],
+      "cwd": "${workspaceFolder}"
+    }    
   ]
 }

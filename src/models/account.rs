@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
-use crate::app::TRANSACTIONS;
+use fraction::Decimal;
 
-use super::transaction::{Amount, ClientID, Transaction};
+use super::{
+    transaction::{Amount, ClientID, Transaction},
+    transactions::{self, Transactions},
+};
 
 pub type Result<T> = std::result::Result<T, RejectedTransaction>;
 pub type Disputes = HashMap<ClientID, Transaction>;
@@ -10,7 +13,7 @@ pub type Disputes = HashMap<ClientID, Transaction>;
 #[derive(Debug, Clone)]
 pub enum RejectedTransaction {
     InvalidType,
-    InsufficientFounds,
+    InsufficientFunds,
     IDNotFound,
     InconsistentWithValueHeld,
     InvalidInput,
@@ -31,18 +34,15 @@ impl Account {
     pub fn new(id: ClientID) -> Self {
         Self {
             client_id: id,
-            available: 0f32,
-            held: 0f32,
-            total: 0f32,
+            available: Decimal::from(0),
+            held: Decimal::from(0),
+            total: Decimal::from(0),
             locked: false,
         }
     }
 
     // A deposit is a credit to the client's asset account, meaning it should increase the available and total funds of the client account.
-    pub fn process_deposit(
-        &mut self,
-        transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
+    pub fn process_deposit(&mut self, transaction: &Transaction) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
         };
@@ -53,14 +53,11 @@ impl Account {
         };
         self.available += amount;
         self.total += amount;
-        Ok((transaction.clone(), self))
+        Ok(transaction.clone())
     }
 
     // A withdraw is a debit to the client's asset account, meaning it should decrease the available and total funds of the client account.
-    pub fn process_withdrawal(
-        &mut self,
-        transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
+    pub fn process_withdrawal(&mut self, transaction: &Transaction) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
         };
@@ -72,9 +69,9 @@ impl Account {
         if self.available > amount {
             self.available -= amount;
             self.total -= amount;
-            Ok((transaction.clone(), self))
+            Ok(transaction.clone())
         } else {
-            Err(RejectedTransaction::InsufficientFounds)
+            Err(RejectedTransaction::InsufficientFunds)
         }
     }
 
@@ -86,20 +83,15 @@ impl Account {
     pub fn process_dispute(
         &mut self,
         transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
+        transactions: &mut Transactions,
+    ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
         };
-        let transactions = TRANSACTIONS
-            .read()
-            .expect("Could not get read access to the transactions store");
         let disputed_tx = transactions.get(transaction.id);
         match disputed_tx {
             None => {
-                println!(
-                    "Ignoring invalid disputed transaction ID {:?}",
-                    transaction.id
-                );
+                // Ignoring invalid disputed transaction ID
                 Err(RejectedTransaction::IDNotFound)
             }
             Some(tx) => {
@@ -113,9 +105,9 @@ impl Account {
                 if self.available > amount {
                     self.held += amount;
                     self.available -= amount;
-                    Ok((transaction.clone(), self))
+                    Ok(transaction.clone())
                 } else {
-                    Err(RejectedTransaction::InsufficientFounds)
+                    Err(RejectedTransaction::InsufficientFunds)
                 }
             }
         }
@@ -129,20 +121,15 @@ impl Account {
     pub fn process_resolve(
         &mut self,
         transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
+        transactions: &mut Transactions,
+    ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
         };
-        let transactions = TRANSACTIONS
-            .read()
-            .expect("Could not get read access to the transactions store");
         let resolved_tx = transactions.get(transaction.id);
         match resolved_tx {
             None => {
-                println!(
-                    "Ignoring invalid resolved transaction ID {:?}",
-                    transaction.id
-                );
+                // Ignoring invalid resolved transaction ID
                 Err(RejectedTransaction::IDNotFound)
             }
             Some(tx) => {
@@ -161,7 +148,7 @@ impl Account {
                 } else {
                     self.held -= amount;
                     self.available += amount;
-                    Ok((transaction.clone(), self))
+                    Ok(transaction.clone())
                 }
             }
         }
@@ -174,20 +161,15 @@ impl Account {
     pub fn process_chargeback(
         &mut self,
         transaction: &Transaction,
-    ) -> Result<(Transaction, &mut Account)> {
+        transactions: &mut Transactions,
+    ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
         };
-        let transactions = TRANSACTIONS
-            .read()
-            .expect("Could not get read access to the transactions store");
         let disputed_tx = transactions.get(transaction.id);
         match disputed_tx {
             None => {
-                println!(
-                    "Ignoring invalid chageback transaction ID {:?}",
-                    transaction.id
-                );
+                // Ignoring invalid chargeback transaction ID
                 Err(RejectedTransaction::IDNotFound)
             }
             Some(tx) => {
@@ -197,15 +179,15 @@ impl Account {
                     Some(value) => amount = value,
                 }
 
-                // What the integrator should do when there are insufficient funds for a chageback?
+                // What the integrator should do when there are insufficient funds for a chargeback?
                 if amount > self.held {
-                    return Err(RejectedTransaction::InsufficientFounds);
+                    return Err(RejectedTransaction::InsufficientFunds);
                 } else {
                     self.held -= amount;
                     self.total -= amount;
                     self.locked = true;
                 }
-                Ok((transaction.clone(), self))
+                Ok(transaction.clone())
             }
         }
     }

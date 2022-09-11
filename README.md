@@ -13,13 +13,14 @@ Proof of Concept of a payment system in Rust for transaction processing and acco
 - Ignores invalid records.
 Rejects invalid transactions:
   - InvalidType,
-  - InsufficientFounds,
+  - InsufficientFunds,
   - IDNotFound,
   - IconsistentWithValueHeld,
   - InvalidInput,
   - TargetTransactionAmountMissing,
 - Bubbles processing errors.
 - Extensible transaction types.
+- Lossless numeric operations on `Amount` types (via using `fraction::Decimal` cargo package).
 
 ## Supported Transaction Types
 The following transaction types are currently supported.
@@ -36,9 +37,9 @@ pub enum TransactionType {
 Additional [Design Notes Here](#design-notes).
 
 ## Run Unit Tests
-The unit tests in this version use the shared transaction store and their assertions are expected to be reset before each one runs using a single thread:
+The unit tests can be ran with multiple threads:
 
-    cargo test -- --test-threads=1
+    cargo test
 
 ## Build release version
     cargo build --release
@@ -79,11 +80,12 @@ OPTIONS:
   - When transaction ids can't help to locate a transaction, processing will produce a `Err(RejectedTransaction::IDNotFound)`.
   - When the amount of a dispute is greater than the account's available value, processing it will produce `Err(RejectedTransaction::InsufficientFounds)`.
   - When a resolve transaction brings an amount that is greater than the held amount, processing will produce an `Err(RejectedTransaction::InconsistentWithValueHeld)`.
+- The way the program reacts to all `RejectedTransaction` cases is to not produce any output and silently move on processing the next transaction.
 
 ## Unit tests
 Executing:
 
-    cargo test -- --test-threads=1
+    cargo test
 
 Will show:
 ```
@@ -126,3 +128,13 @@ Which is the output of having processed:
 - Resolution of one of the disputes, 
 - A chargeback of the other dispute and
 - Rejecting a deposit after the chargeback made the account to get locked
+
+
+## Changes
+
+- `v1.0.1` -> `v1.0.2`:  
+    - Deprecated and removed usage of globals.
+    - Added a bunch of testing scenarios.
+    - Building the CSV Reader setting it to not expect headers in the input file (preventing bug of not processing the first record).
+    - Removed output messages when rejecting unexpected or inconsistent transactions. Now they will be silently ignored.
+    - `fraction::Decimal` is now the foundation of the `Amount` type so operations can be made lossless (preventing error accumulation on balances) while output rendering can be show as per specs.
