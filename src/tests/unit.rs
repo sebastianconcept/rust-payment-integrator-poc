@@ -1,4 +1,5 @@
 use csv::StringRecord;
+use fraction::Decimal;
 
 use crate::{
     app::{App},
@@ -50,7 +51,7 @@ fn can_parse_a_deposit_command() {
             assert_eq!(kind, TransactionType::Deposit);
             assert_eq!(tx.client_id, 1u16);
             assert_eq!(tx.id, 1u32);
-            assert_eq!(tx.amount.unwrap(), 1.0f32);
+            assert_eq!(tx.amount.unwrap(), Decimal::from(1.0));
         }
     }
 }
@@ -66,7 +67,7 @@ fn can_parse_a_withdrawal_command() {
             assert_eq!(kind, TransactionType::Withdrawal);
             assert_eq!(tx.client_id, 2u16);
             assert_eq!(tx.id, 5u32);
-            assert_eq!(tx.amount.unwrap(), 3.0f32);
+            assert_eq!(tx.amount.unwrap(), Decimal::from(3.0));
         }
     }
 }
@@ -81,18 +82,18 @@ fn deposit_can_increase_account_balance() {
         Ok(tx) => {
             let client_id = tx.client_id.clone();
             let before = app.get_available_balance(client_id);
-            assert_eq!(before, 0f32);
+            assert_eq!(before, Decimal::from(0));
             app.process(tx);
             let after = app.get_available_balance(client_id);
             assert_ne!(before, after);
-            assert_eq!(after, 3.0f32);
+            assert_eq!(after, Decimal::from(3.0));
         }
     }
     let tx2 = Transaction::from_record(StringRecord::from(vec!["deposit", "2", "15", "1.5"]));
     let client_id = tx2.as_ref().unwrap().client_id;
     app.process(tx2.unwrap());
     let after2 = app.get_available_balance(client_id);
-    assert_eq!(after2, 4.5f32);
+    assert_eq!(after2, Decimal::from(4.5));
     assert_eq!(app.get_held_balance(client_id) + app.get_available_balance(client_id), app.get_total_balance(client_id));
     assert_eq!(app.is_locked(client_id), false);
 }
@@ -108,14 +109,14 @@ fn withdrawal_can_decrease_account_balance() {
             let client_id = tx.client_id.clone();
             app.process(tx);
             let after = app.get_available_balance(client_id);
-            assert_eq!(after, 3.0f32);
+            assert_eq!(after, Decimal::from(3.0));
         }
     }
     let tx2 = Transaction::from_record(StringRecord::from(vec!["withdrawal", "2", "15", "1.3"]));
     let client_id = tx2.as_ref().unwrap().client_id;
     app.process(tx2.unwrap());
     let after2 = app.get_available_balance(client_id);
-    assert_eq!(after2, 3.0 - 1.3f32);
+    assert_eq!(after2, Decimal::from(3.0 - 1.3));
     let size = app.transactions_size();
     assert_eq!(size, 2);
     assert_eq!(app.get_held_balance(client_id) + app.get_available_balance(client_id), app.get_total_balance(client_id));
@@ -136,7 +137,7 @@ fn dispute_increase_disputed_balance_and_maintain_total() {
     let account = a.get_account(client_id);
     let total = account.total_balance();
     let available = account.available_balance();
-    assert_eq!(available, total - 2.0f32);
+    assert_eq!(available, Decimal::from(total - Decimal::from(2.0)));
     assert_eq!(app.get_held_balance(client_id) + app.get_available_balance(client_id), app.get_total_balance(client_id));
     assert_eq!(app.is_locked(client_id), false);
 }
@@ -153,16 +154,16 @@ fn resolve_decrease_held_balances_increase_available_and_maintain_total() {
     app.process(tx3.unwrap());
     let held_before = app.get_account(client_id).held_balance().clone();
     let total_before = app.get_account(client_id).total_balance().clone();
-    assert_ne!(held_before, 0f32);
-    assert_eq!(held_before, 2.0f32);
-    assert_eq!(total_before, 3.5f32);
+    assert_ne!(held_before, Decimal::from(0));
+    assert_eq!(held_before, Decimal::from(2.0));
+    assert_eq!(total_before, Decimal::from(3.5));
     let tx4 = Transaction::from_record(StringRecord::from(vec!["resolve", "2", "4", ""]));
     app.process(tx4.unwrap());
     let held_after = app.get_account(client_id).held_balance().clone();
     let total_after = app.get_account(client_id).total_balance().clone();
-    assert_ne!(held_after, 2.0f32);
-    assert_eq!(held_after, 0f32);
-    assert_eq!(total_after, 3.5f32);
+    assert_ne!(held_after, Decimal::from(2.0));
+    assert_eq!(held_after, Decimal::from(0));
+    assert_eq!(total_after, Decimal::from(3.5));
     assert_eq!(app.get_held_balance(client_id) + app.get_available_balance(client_id), app.get_total_balance(client_id));
     assert_eq!(app.is_locked(client_id), false);
 }
@@ -181,17 +182,17 @@ fn chargeback_decreases_held_and_total_balances_and_locks_account() {
     app.process(tx3.unwrap());
     let held_before = app.get_account(client_id).held_balance().clone();
     let total_before = app.get_account(client_id).total_balance().clone();
-    assert_ne!(held_before, 0f32);
-    assert_eq!(held_before, 2.0f32);
-    assert_eq!(total_before, 3.5f32);
+    assert_ne!(held_before, Decimal::from(0));
+    assert_eq!(held_before, Decimal::from(2.0));
+    assert_eq!(total_before, Decimal::from(3.5));
     let tx4 = Transaction::from_record(StringRecord::from(vec!["chargeback", "2", "4", ""]));
     app.process(tx4.unwrap());
     let held_after = app.get_account(client_id).held_balance().clone();
     let total_after = app.get_account(client_id).total_balance().clone();
     assert!(app.get_account(client_id).is_locked());
-    assert_ne!(held_after, 2f32);
-    assert_eq!(held_after, 0f32);
-    assert_eq!(total_after, 1.5f32);
+    assert_ne!(held_after, Decimal::from(2));
+    assert_eq!(held_after, Decimal::from(0));
+    assert_eq!(total_after, Decimal::from(1.5));
     assert_eq!(app.get_held_balance(client_id) + app.get_available_balance(client_id), app.get_total_balance(client_id));
     assert_eq!(app.is_locked(client_id), true);
 }

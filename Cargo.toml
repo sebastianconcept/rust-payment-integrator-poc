@@ -1,6 +1,6 @@
 [package]
 name = "integrator"
-version = "0.1.0"
+version = "1.0.2"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -10,3 +10,4 @@ clap = "3.2.17"
 csv = "1.1.6"
 lazy_static = "1.4.0"
 mut_static = "5.0.0"
+fraction = "0.11.1"

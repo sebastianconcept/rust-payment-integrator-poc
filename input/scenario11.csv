@@ -1,0 +1,26 @@
+deposit,    1,      1, 10
+deposit,    2,      2, 10
+deposit,    3,      3, 10
+deposit,    4,      4, 10
+deposit,    1,      5, 10
+deposit,    2,      6, 10
+deposit,    3,      7, 10
+deposit,    4,      8, 10
+withdrawal, 4,      9, 1.5
+withdrawal, 1,      10, 3.0
+dispute,    1,      1,
+withdrawal, 1,      11, 2
+resolve,    1,      1,
+withdrawal, 1,      12, 2
+dispute,    3,      7,
+withdrawal, 2,      13, 1.2
+chargeback,    3,      7,
+withdrawal, 4,      14, 1.5
+withdrawal, 3,      15, 3
+dispute,    2,      2,
+deposit,    3,      16, 10
+dispute,    2,      280,
+chargeback,    1,      2,
+chargeback,    1,      770,
+withdrawal, 3,      17, 3
+dispute,    3,      16,

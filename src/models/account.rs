@@ -1,6 +1,11 @@
 use std::collections::HashMap;
 
-use super::{transaction::{Amount, ClientID, Transaction}, transactions::{Transactions, self}};
+use fraction::Decimal;
+
+use super::{
+    transaction::{Amount, ClientID, Transaction},
+    transactions::{self, Transactions},
+};
 
 pub type Result<T> = std::result::Result<T, RejectedTransaction>;
 pub type Disputes = HashMap<ClientID, Transaction>;
@@ -29,18 +34,15 @@ impl Account {
     pub fn new(id: ClientID) -> Self {
         Self {
             client_id: id,
-            available: 0f32,
-            held: 0f32,
-            total: 0f32,
+            available: Decimal::from(0),
+            held: Decimal::from(0),
+            total: Decimal::from(0),
             locked: false,
         }
     }
 
     // A deposit is a credit to the client's asset account, meaning it should increase the available and total funds of the client account.
-    pub fn process_deposit(
-        &mut self,
-        transaction: &Transaction
-    ) -> Result<Transaction> {
+    pub fn process_deposit(&mut self, transaction: &Transaction) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
         };
@@ -55,10 +57,7 @@ impl Account {
     }
 
     // A withdraw is a debit to the client's asset account, meaning it should decrease the available and total funds of the client account.
-    pub fn process_withdrawal(
-        &mut self,
-        transaction: &Transaction,
-    ) -> Result<Transaction> {
+    pub fn process_withdrawal(&mut self, transaction: &Transaction) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
         };
@@ -84,7 +83,7 @@ impl Account {
     pub fn process_dispute(
         &mut self,
         transaction: &Transaction,
-        transactions: &mut Transactions
+        transactions: &mut Transactions,
     ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
@@ -92,10 +91,7 @@ impl Account {
         let disputed_tx = transactions.get(transaction.id);
         match disputed_tx {
             None => {
-                println!(
-                    "Ignoring invalid disputed transaction ID {:?}",
-                    transaction.id
-                );
+                // Ignoring invalid disputed transaction ID
                 Err(RejectedTransaction::IDNotFound)
             }
             Some(tx) => {
@@ -125,7 +121,7 @@ impl Account {
     pub fn process_resolve(
         &mut self,
         transaction: &Transaction,
-        transactions: &mut Transactions
+        transactions: &mut Transactions,
     ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
@@ -133,10 +129,7 @@ impl Account {
         let resolved_tx = transactions.get(transaction.id);
         match resolved_tx {
             None => {
-                println!(
-                    "Ignoring invalid resolved transaction ID {:?}",
-                    transaction.id
-                );
+                // Ignoring invalid resolved transaction ID
                 Err(RejectedTransaction::IDNotFound)
             }
             Some(tx) => {
@@ -168,7 +161,7 @@ impl Account {
     pub fn process_chargeback(
         &mut self,
         transaction: &Transaction,
-        transactions: &mut Transactions
+        transactions: &mut Transactions,
     ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
@@ -176,10 +169,7 @@ impl Account {
         let disputed_tx = transactions.get(transaction.id);
         match disputed_tx {
             None => {
-                println!(
-                    "Ignoring invalid chageback transaction ID {:?}",
-                    transaction.id
-                );
+                // Ignoring invalid chargeback transaction ID
                 Err(RejectedTransaction::IDNotFound)
             }
             Some(tx) => {
