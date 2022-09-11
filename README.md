@@ -13,7 +13,7 @@ Proof of Concept of a payment system in Rust for transaction processing and acco
 - Ignores invalid records.
 Rejects invalid transactions:
   - InvalidType,
-  - InsufficientFounds,
+  - InsufficientFunds,
   - IDNotFound,
   - IconsistentWithValueHeld,
   - InvalidInput,
