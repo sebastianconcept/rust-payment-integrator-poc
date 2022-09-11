@@ -2,11 +2,7 @@
 extern crate lazy_static;
 extern crate mut_static;
 
-use integrator::{
-    app::{App},
-    cli::get_input_filename,
-    csv::get_transactions_iter,
-};
+use integrator::{app::App, cli::get_input_filename, csv::get_transactions_iter};
 
 fn main() {
     let mut app = App::new();
@@ -25,7 +21,9 @@ fn main() {
                     let message = format!("{},{},{},{},{}", client, available, held, total, locked);
                     app.output_write(message);
                 }
-                _RejectedTransaction => {}
+                _RejectedTransaction => {
+                    // Silently ignore rejected transactions
+                }
             },
             Err(_) => {}
         };

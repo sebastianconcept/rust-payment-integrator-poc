@@ -76,7 +76,7 @@
         }
       },
       "args": [
-        "./input/scenario7.csv"
+        "./input/scenario15.csv"
       ],
       "cwd": "${workspaceFolder}"
     }    

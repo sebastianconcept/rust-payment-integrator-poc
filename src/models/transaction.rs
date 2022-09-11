@@ -6,7 +6,7 @@ pub struct InvalidTransactionType;
 
 pub type ClientID = u16;
 pub type TransactionID = u32;
-pub type Amount = f32;
+pub type Amount = fraction::Decimal;
 
 // type, client, tx, amount
 #[derive(Debug, Clone, PartialEq)]
