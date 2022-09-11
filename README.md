@@ -20,6 +20,7 @@ Rejects invalid transactions:
   - TargetTransactionAmountMissing,
 - Bubbles processing errors.
 - Extensible transaction types.
+- Lossless numeric operations on `Amount` types (via using `fraction::Decimal` cargo package).
 
 ## Supported Transaction Types
 The following transaction types are currently supported.
@@ -127,3 +128,13 @@ Which is the output of having processed:
 - Resolution of one of the disputes, 
 - A chargeback of the other dispute and
 - Rejecting a deposit after the chargeback made the account to get locked
+
+
+## Changes
+
+- `v1.0.1` -> `v1.0.2`:  
+    - Deprecated and removed usage of globals.
+    - Added a bunch of testing scenarios.
+    - Building the CSV Reader setting it to not expect headers in the input file (preventing bug of not processing the first record).
+    - Removed output messages when rejecting unexpected or inconsistent transactions. Now they will be silently ignored.
+    - `fraction::Decimal` is now the foundation of the `Amount` type so operations can be made lossless (preventing error accumulation on balances) while output rendering can be show as per specs.
