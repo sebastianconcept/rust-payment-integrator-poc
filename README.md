@@ -79,6 +79,7 @@ OPTIONS:
   - When transaction ids can't help to locate a transaction, processing will produce a `Err(RejectedTransaction::IDNotFound)`.
   - When the amount of a dispute is greater than the account's available value, processing it will produce `Err(RejectedTransaction::InsufficientFounds)`.
   - When a resolve transaction brings an amount that is greater than the held amount, processing will produce an `Err(RejectedTransaction::InconsistentWithValueHeld)`.
+- The way the program reacts to all `RejectedTransaction` cases is to not produce any output and silently move on processing the next transaction.
 
 ## Unit tests
 Executing:

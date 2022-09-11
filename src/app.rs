@@ -9,7 +9,7 @@ use crate::models::{
     account::{Account, RejectedTransaction, Result},
     output::Output,
     transaction::{Amount, ClientID, Transaction, TransactionType},
-    transactions::{Transactions},
+    transactions::Transactions,
 };
 
 type Accounts = HashMap<ClientID, Account>;
@@ -26,7 +26,7 @@ impl App {
         Self {
             accounts: RefCell::new(Default::default()),
             transactions: RefCell::new(Transactions::new()),
-            output: Output::new()
+            output: Output::new(),
         }
     }
 
@@ -85,26 +85,17 @@ impl App {
         (*account).process_withdrawal(transaction)
     }
 
-    fn process_dispute(
-        &self,
-        transaction: &Transaction,
-    ) -> Result<Transaction> {
+    fn process_dispute(&self, transaction: &Transaction) -> Result<Transaction> {
         let mut account = self.get_account(transaction.client_id);
         (*account).process_dispute(transaction, &mut self.transactions.borrow_mut())
     }
 
-    fn process_resolve(
-        &self,
-        transaction: &Transaction,
-    ) -> Result<Transaction> {
+    fn process_resolve(&self, transaction: &Transaction) -> Result<Transaction> {
         let mut account = self.get_account(transaction.client_id);
         (*account).process_resolve(transaction, &mut self.transactions.borrow_mut())
     }
 
-    fn process_chargeback(
-        &self,
-        transaction: &Transaction,
-    ) -> Result<Transaction> {
+    fn process_chargeback(&self, transaction: &Transaction) -> Result<Transaction> {
         let mut account = self.get_account(transaction.client_id);
         (*account).process_chargeback(transaction, &mut self.transactions.borrow_mut())
     }
