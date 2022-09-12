@@ -21,6 +21,7 @@ Rejects invalid transactions:
 - Bubbles processing errors.
 - Extensible transaction types.
 - Lossless numeric operations on `Amount` types (via using `fraction::Decimal` cargo package).
+- Streams over large input files.
 
 ## Supported Transaction Types
 The following transaction types are currently supported.
