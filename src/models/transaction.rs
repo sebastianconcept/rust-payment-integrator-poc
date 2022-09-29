@@ -66,7 +66,7 @@ impl Transaction {
             Some(value) => {
                 let a = value.trim().parse::<Amount>();
                 match a {
-                    Err(err) => return Err(RejectedTransaction::InvalidInput),
+                    Err(_err) => return Err(RejectedTransaction::InvalidInput),
                     Ok(value) => amount = Some(value),
                 }
             }
@@ -81,7 +81,7 @@ impl Transaction {
             Some(value) => {
                 let a = value.trim().parse::<Amount>();
                 match a {
-                    Err(err) => return Err(RejectedTransaction::InvalidInput),
+                    Err(_err) => return Err(RejectedTransaction::InvalidInput),
                     Ok(value) => amount = Some(value),
                 }
             }

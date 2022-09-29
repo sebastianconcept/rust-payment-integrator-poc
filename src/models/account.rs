@@ -4,7 +4,7 @@ use fraction::Decimal;
 
 use super::{
     transaction::{Amount, ClientID, Transaction},
-    transactions::{self, Transactions},
+    transactions::Transactions,
 };
 
 pub type Result<T> = std::result::Result<T, RejectedTransaction>;
