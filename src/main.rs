@@ -20,7 +20,7 @@ fn main() {
                     let message = format!("{},{},{},{},{}", client, available, held, total, locked);
                     app.output_write(message);
                 }
-                _r => {
+                _ => {
                     // Silently ignore rejected transactions
                 }
             },
