@@ -77,27 +77,27 @@ impl App {
 
     fn process_deposit(&self, transaction: &Transaction) -> Result<Transaction> {
         let mut account = self.get_account(transaction.client_id);
-        (*account).process_deposit(transaction)
+        account.process_deposit(transaction)
     }
 
     fn process_withdrawal(&self, transaction: &Transaction) -> Result<Transaction> {
         let mut account = self.get_account(transaction.client_id);
-        (*account).process_withdrawal(transaction)
+        account.process_withdrawal(transaction)
     }
 
     fn process_dispute(&self, transaction: &Transaction) -> Result<Transaction> {
         let mut account = self.get_account(transaction.client_id);
-        (*account).process_dispute(transaction, &mut self.transactions.borrow_mut())
+        account.process_dispute(transaction, &mut self.transactions.borrow_mut())
     }
 
     fn process_resolve(&self, transaction: &Transaction) -> Result<Transaction> {
         let mut account = self.get_account(transaction.client_id);
-        (*account).process_resolve(transaction, &mut self.transactions.borrow_mut())
+        account.process_resolve(transaction, &mut self.transactions.borrow_mut())
     }
 
     fn process_chargeback(&self, transaction: &Transaction) -> Result<Transaction> {
         let mut account = self.get_account(transaction.client_id);
-        (*account).process_chargeback(transaction, &mut self.transactions.borrow_mut())
+        account.process_chargeback(transaction, &mut self.transactions.borrow_mut())
     }
 
     pub fn get_available_balance(&mut self, client_id: ClientID) -> Amount {

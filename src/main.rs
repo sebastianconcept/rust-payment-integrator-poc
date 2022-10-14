@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate lazy_static;
 extern crate mut_static;
 
@@ -21,7 +20,7 @@ fn main() {
                     let message = format!("{},{},{},{},{}", client, available, held, total, locked);
                     app.output_write(message);
                 }
-                _RejectedTransaction => {
+                _ => {
                     // Silently ignore rejected transactions
                 }
             },
