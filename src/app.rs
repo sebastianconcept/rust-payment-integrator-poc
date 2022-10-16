@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use csv::StringRecord;
-use fraction::Decimal;
 
 use crate::models::{
     account::{Account, RejectedTransaction, Result},
