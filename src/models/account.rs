@@ -83,7 +83,7 @@ impl Account {
     pub fn process_dispute(
         &mut self,
         transaction: &Transaction,
-        transactions: &mut Transactions,
+        transactions: &Transactions,
     ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
@@ -121,7 +121,7 @@ impl Account {
     pub fn process_resolve(
         &mut self,
         transaction: &Transaction,
-        transactions: &mut Transactions,
+        transactions: &Transactions,
     ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
@@ -161,7 +161,7 @@ impl Account {
     pub fn process_chargeback(
         &mut self,
         transaction: &Transaction,
-        transactions: &mut Transactions,
+        transactions: &Transactions,
     ) -> Result<Transaction> {
         if self.locked {
             return Err(RejectedTransaction::AccountLocked);
