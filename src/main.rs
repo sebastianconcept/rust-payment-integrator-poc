@@ -12,7 +12,9 @@ fn main() {
             Ok(r) => match app.process_record(r) {
                 Ok(tx) => {
                     let client = tx.client_id;
-                    let account = app.get_account(client);
+                    let account = app
+                        .get_account(client)
+                        .expect("ClientID always returns an account");
                     let available = format!("{:.4}", account.available_balance());
                     let held = format!("{:.4}", account.held_balance());
                     let total = format!("{:.4}", account.total_balance());
